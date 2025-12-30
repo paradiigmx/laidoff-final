@@ -1,0 +1,188 @@
+You are working inside an existing Vite + React + TypeScript app called “DreamShift”.
+Goal: Fix the resume parsing flow so it reliably populates the existing “Edit Resume Content” form, NOT a visual resume preview.
+
+NON-NEGOTIABLE:
+- The AI must return ONLY valid JSON.
+- No markdown. No commentary. No explanations. No “notes”. No extra keys.
+- If a field cannot be confidently extracted, return an empty string "" or empty array [].
+- Never insert instructional text into user fields.
+- Never merge sections together incorrectly (ex: don’t put summary text into skills; don’t put notes into title).
+
+TASKS (implement all):
+1) Create a strict schema type ResumeFormData and use it everywhere.
+2) Update parsing to output exactly that schema, with strict normalization + constraints (below).
+3) Add a safe validator + sanitizer step that:
+   - removes forbidden phrases like “this note is for internal use”, “I will not”, “the model”, “json”, etc.
+   - truncates to max lengths
+   - enforces arrays are arrays and strings are strings
+   - strips bullet prefixes and empty bullets
+4) Ensure the form is populated from ResumeFormData ONLY.
+5) Do not change the hero, layout, or overall UI look. Only fix parsing + data population.
+
+========================================
+A) SCHEMA (MUST MATCH EXACTLY)
+========================================
+
+Create this TypeScript type in src/types/resumeForm.ts (or existing types file if you already have one):
+
+export type ResumeFormData = {
+  contact: {
+    fullName: string;
+    title: string;
+    email: string;
+    phone: string;
+    location: string;
+    linkedin?: string; // optional
+  };
+  summary: string;
+  experience: Array<{
+    jobTitle: string;
+    company: string;
+    dates: string;
+    location?: string; // optional
+    bullets: string[];
+  }>;
+  education: Array<{
+    degree: string;
+    school: string;
+    dates: string;
+  }>;
+  skills: string[];
+  certifications: string[];
+  awards: string[];
+};
+
+No other keys are allowed at runtime.
+
+========================================
+B) STRICT CONTENT RULES (ENFORCE IN CODE)
+========================================
+
+1) Summary:
+- 2–3 sentences
+- 60–80 words target
+- hard max: 90 words
+- no “I” statements (avoid first person)
+- no filler like “results-driven professional” unless it’s supported by text
+
+2) Experience:
+- keep max 5 roles; if more are found, keep the most recent 5
+- bullets per role:
+  - if total roles <= 3 => 4 bullets each (max 4)
+  - if total roles == 4 => 3 bullets each (max 3)
+  - if total roles >= 5 => 2 bullets each (max 2)
+- bullet constraints:
+  - each bullet max 18 words
+  - remove leading symbols like “•”, “-”, “–”
+  - no empty bullets
+  - action verb first when possible
+  - no paragraphs
+
+3) Skills:
+- 8–12 skills only (target 10)
+- must be single terms/short phrases (max 3 words per skill)
+- dedupe case-insensitively
+- no sentences, no commas inside individual skill items
+- remove junk like “etc”, “and”, “various”
+
+4) Contact:
+- fullName: best guess from top of resume
+- title: single role title only (max 60 chars) — never a list of multiple titles
+- email/phone/location: best guess; if missing blank
+
+5) Education:
+- degree + school + dates (dates can be blank)
+- max 2 entries
+
+6) Certs/Awards:
+- max 6 each
+- each entry max 80 chars
+
+========================================
+C) PARSING STRATEGY (DO THIS EXACTLY)
+========================================
+
+1) Text extraction:
+- If input is PDF: extract text robustly (use existing PDF text extraction; if none exists, add one).
+- Normalize whitespace, fix broken lines, join hyphenated line breaks.
+
+2) Deterministic pre-pass (no AI):
+- Attempt regex-based extraction for email, phone, linkedin URL.
+- Attempt to detect sections by headings: SUMMARY/PROFILE, EXPERIENCE/WORK HISTORY, EDUCATION, SKILLS, CERTIFICATIONS, AWARDS.
+- Split into section blocks.
+
+3) AI pass (only for structuring):
+Call your AI model with:
+- a SYSTEM prompt that forces pure JSON output and schema compliance
+- the extracted resume text
+- optional: the section blocks you detected
+
+The AI must ONLY map content into the schema. It must NOT invent jobs, companies, or dates.
+If unsure: leave blank.
+
+4) Post-process sanitize + enforce constraints:
+Run sanitizeResumeFormData() that:
+- validates shape, strips forbidden phrases, trims lengths
+- enforces bullet counts based on role count
+- enforces summary word count + sentence count
+- enforces skills count + structure
+- returns a clean ResumeFormData object
+
+========================================
+D) AI SYSTEM PROMPT (USE EXACTLY)
+========================================
+
+Create a constant string SYSTEM_PROMPT_RESUME_PARSE:
+
+"You are a resume parsing engine. Output ONLY valid JSON. No markdown. No commentary.
+You MUST output exactly this JSON shape:
+{
+  \"contact\": {\"fullName\":\"\",\"title\":\"\",\"email\":\"\",\"phone\":\"\",\"location\":\"\",\"linkedin\":\"\"},
+  \"summary\":\"\",
+  \"experience\":[{\"jobTitle\":\"\",\"company\":\"\",\"dates\":\"\",\"location\":\"\",\"bullets\":[]}],
+  \"education\":[{\"degree\":\"\",\"school\":\"\",\"dates\":\"\"}],
+  \"skills\":[],
+  \"certifications\":[],
+  \"awards\":[]
+}
+Rules:
+- Do not include any keys other than those shown.
+- Do not include explanations, notes, or instruction text.
+- Do not fabricate information. If not present, use empty string or empty array.
+- title must be a single role title, not a list.
+- bullets must be short (one sentence), no paragraphs.
+Return only JSON."
+
+========================================
+E) IMPLEMENTATION REQUIREMENTS
+========================================
+
+1) Add these functions in src/services/resumeParser.ts:
+- extractTextFromInput(fileOrText): Promise<string>
+- heuristicParse(resumeText): Partial<ResumeFormData>
+- aiParseToSchema(resumeText, heuristic): Promise<ResumeFormData>
+- sanitizeResumeFormData(data): ResumeFormData
+- parseResumeToFormData(fileOrText): Promise<ResumeFormData>
+
+2) Update the UI flow:
+- When user clicks “Parse & Fill Form”, call parseResumeToFormData()
+- Populate the existing form state with the returned ResumeFormData
+- If parsing fails, show an error toast and do not mutate the form state
+
+3) Testing:
+- Add a small test harness function (even if manual) that logs the parsed object in console
+- Include 3 sample raw resume text snippets in code comments for quick dev testing
+
+========================================
+F) DO NOT BREAK THE APP
+========================================
+
+- Do not import packages that don’t exist without adding them to package.json.
+- If you previously used "@react-pdf/renderer" or "react-pdf/renderer", remove or isolate it.
+- This task is ONLY about parsing + populating the form reliably.
+
+DELIVERABLE:
+- Provide the updated/added files with complete code blocks.
+- Ensure TypeScript compiles.
+- Keep changes minimal to existing UI; focus on the parsing pipeline and schema enforcement.
+- After changes, the form should populate correctly from the user’s resume PDF/text instead of producing empty experience or stuffing text into wrong fields.

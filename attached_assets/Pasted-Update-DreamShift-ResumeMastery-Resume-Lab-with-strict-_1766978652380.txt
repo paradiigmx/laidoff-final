@@ -1,0 +1,46 @@
+Update DreamShift/ResumeMastery “Resume Lab” with strict layout constraints so the resume ALWAYS fits cleanly and never overflows or compresses weirdly.
+
+NON-NEGOTIABLE:
+- Keep the hero/header UI unchanged.
+- Keep only 3 templates: Modern, Executive, Minimal.
+- Remove any “page count selector” UI. Pages should be automatic.
+- Resume preview must be locked to true Letter size: 8.5in x 11in, margin 0.5in.
+- Default output target is 1 page. If content still cannot fit after compression rules, automatically add page 2.
+
+IMPLEMENT THESE HARD LIMITS:
+A) Skills display cap:
+- Keep all skills in data, but in preview show only MAX_SKILLS_SHOWN = 12.
+- If there are more than 12, render a final badge: “+X more” instead of rendering the rest.
+
+B) Experience bullet rules:
+- Determine total role count (experience.length).
+- If roles <= 3: maxBulletsPerRole = 4
+- If roles == 4: maxBulletsPerRole = 3
+- If roles >= 5: maxBulletsPerRole = 2
+- Enforce max bullet word length (default 16 words). Trim extra words with an ellipsis.
+- Never allow paragraph bullets.
+
+C) Summary rules:
+- Summary max 80 words, min 45 words target.
+- If overflow, summary is trimmed down to 60 then 45 words.
+
+D) “Fit Mode” (auto compression loop):
+Create a function fitResumeToPage() that measures overflow in the preview container.
+If overflow is detected, apply compression steps IN ORDER until it fits:
+1) Reduce MAX_SKILLS_SHOWN from 12 → 10 → 8
+2) Reduce maxBulletsPerRole by 1 (but never below 1)
+3) Reduce bullet max words from 16 → 14 → 12
+4) Reduce summary max words from 80 → 60 → 45
+5) Reduce line-height from 1.35 → 1.25
+6) Reduce base font size from 12 → 11.5 → 11
+If still overflowing after all steps, automatically move overflow content to page 2.
+
+MEASURING OVERFLOW:
+- Use a ref to the resume page content area. Compare scrollHeight > clientHeight to detect overflow.
+- This is required in both screen preview and PDF export generation.
+- Never stretch page height beyond 11in. Never scale the page container.
+
+DELIVERABLES:
+- Update the resume preview component to use fitResumeToPage() on data/template changes.
+- Update the PDF export to use the same constraints (skills cap, bullet trimming, summary trimming, font/lineHeight adjustments).
+- Keep code minimal and stable; do not introduce new UI or new dependencies.

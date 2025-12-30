@@ -1,0 +1,489 @@
+You are a senior product engineer, UX designer, and systems architect.
+
+Your task is to build and refactor an app called DreamShift so that it feels like one connected experience, not a collection of independent tools.
+
+DreamShift helps people:
+
+recover after a layoff or career disruption
+
+figure out what to do next
+
+find jobs
+
+make money in the short term
+
+optionally start a business
+
+stay organized through clear, guided plans the app creates with them
+
+The app must feel:
+
+simple
+
+calm
+
+human
+
+reassuring
+
+Even though it does sophisticated work underneath.
+
+🚫 IMPORTANT NAVIGATION RULE (DO NOT VIOLATE)
+
+DO NOT change any existing menu items or labels.
+All navigation items must remain exactly as they are in the current build.
+
+Improvements must come from:
+
+shared data
+
+shared resources
+
+shared plans
+
+cross-feature awareness
+
+Not from renaming or reorganizing the menu.
+
+CORE DESIGN PRINCIPLES (NON-NEGOTIABLE)
+
+Everything talks to everything
+
+Plans are the center of the app
+
+Resources are shared, not duplicated
+
+Language stays simple and non-technical
+
+Starting a business is a paid feature
+
+Sections must feel aware of each other
+
+Unemployment, Monetization, Money, and Gigs must be resource-rich and deep
+
+1️⃣ HOME (KEEP NAME — CHANGE FUNCTION)
+
+The Home screen must act as a Plans Hub, even though the name stays the same.
+
+Home must surface:
+🧭 Active Plans
+
+Plans created throughout the app:
+
+Career Direction Plan
+
+Job Search Plan
+
+Income / Money Plan
+
+Business Plan (paid feature)
+
+Each plan shows:
+
+goal
+
+current step
+
+next recommended action
+
+related resources
+
+progress
+
+📄 Your Resumes
+
+all resumes
+
+resume variants
+
+quick actions:
+
+use for a job
+
+edit
+
+optimize
+
+💼 Saved Jobs
+
+saved jobs
+
+applied jobs
+
+interviews
+
+fit score
+
+layoff risk
+
+notes
+
+💡 Saved Ideas & Opportunities
+
+business ideas
+
+gigs
+
+monetization tools
+
+income opportunities
+
+✅ Next Actions
+
+Clear, calm guidance generated from plans:
+
+“Apply to 3 jobs”
+
+“Finish business name”
+
+“Apply for unemployment”
+
+“Upload severance agreement”
+
+2️⃣ PLANS (THE CONNECTIVE TISSUE)
+
+Everything in DreamShift must either:
+
+create a plan
+
+update a plan
+
+contribute to a plan
+
+Plan data includes:
+
+plan type (career, job, income, business)
+
+goal
+
+steps
+
+related resources
+
+related resumes
+
+related jobs
+
+notes
+
+status
+
+Plans appear on Home and update automatically across the app.
+
+3️⃣ SHARED RESOURCE SYSTEM (CRITICAL)
+
+All external tools, programs, platforms, and opportunities must live in one unified resource system.
+
+Each resource includes:
+
+name
+
+category:
+
+unemployment
+
+monetization
+
+money
+
+gigs
+
+business tools
+
+applicable business types
+
+use cases
+
+cost level
+
+time to money
+
+difficulty
+
+Resources must be reusable across:
+
+Money
+
+Monetization
+
+Gigs
+
+Unemployment
+
+Start a Business
+
+Plans
+
+Home
+
+No duplicated resource lists.
+
+4️⃣ CAREER COACH (ASSESSMENT → PLANS)
+
+Career Coach must generate:
+
+Career Direction Plan
+
+Job Search Plan
+
+Optional Business Recommendation
+
+Assessment rules:
+
+scenario-based
+
+tradeoff-based
+
+reflective
+
+emotionally accurate
+
+simple language
+
+no generic questions
+
+🧠 CAREER COACH ASSESSMENT QUESTIONS
+Identity & Context
+
+What’s the biggest reason you want change right now?
+
+Which past job looked good on paper but felt wrong?
+
+What kind of work do people assume you enjoy — but you don’t?
+
+Interests
+
+If money wasn’t a concern for one year, how would you spend your work time?
+
+Which tasks make time pass quickly for you?
+
+Which tasks drain you even if you’re good at them?
+
+Strengths
+
+What problems do people usually come to you for?
+
+What have you picked up faster than others in past roles?
+
+What do you do naturally that others struggle with?
+
+Values
+
+What matters more right now: stability or flexibility?
+
+Would you rather be highly paid or highly in control?
+
+What would make work feel meaningful to you?
+
+Work Style
+
+Do you prefer clear instructions or freedom to figure things out?
+
+Do you work better alone or with others?
+
+How comfortable are you with uncertainty?
+
+Lifestyle
+
+How many hours per week can you realistically work?
+
+Do you need remote work?
+
+How important is predictable income right now?
+
+Money & Risk
+
+What income do you need to feel secure?
+
+How long could you manage without steady income?
+
+How do you usually respond to financial uncertainty?
+
+Business Readiness
+
+Have you ever made money on your own before?
+
+Would you rather build something or join something?
+
+Do you enjoy making decisions without approval?
+
+Reflection
+
+Does your current path feel like growth or survival?
+
+What would success look like for you in 6 months?
+
+Career Coach Output
+
+strengths
+
+interests
+
+what drains them
+
+best roles
+
+best industries
+
+environments to avoid
+
+clear “Should you start a business?” (yes/no + why)
+
+48-hour, 7-day, 30-day plan
+
+Plans generated here appear on Home.
+
+5️⃣ JOBS (CONNECTED, AWARE)
+
+Jobs must:
+
+use resume + assessment data
+
+show fit score
+
+show layoff risk (low / medium / high)
+
+allow saving and tracking
+
+Saved jobs update:
+
+Job Search Plan
+
+Home
+
+6️⃣ MONEY / MONETIZATION / GIGS (RESOURCE-HEAVY)
+
+These sections must:
+
+maximize helpful resources
+
+pull from the shared resource system
+
+suggest multiple income paths
+
+clearly label time-to-money and effort
+
+Include:
+
+gig platforms
+
+freelance marketplaces
+
+side income tools
+
+product-based income
+
+service-based income
+
+local and online options
+
+Saved items update:
+
+Income Plan
+
+Home
+
+7️⃣ UNEMPLOYMENT (DEEP & STATE-AWARE)
+
+Unemployment resources must be extensive.
+
+Include:
+
+eligibility
+
+how to apply
+
+weekly certification steps
+
+timelines
+
+common mistakes
+
+appeals
+
+workforce programs
+
+retraining programs
+
+official links
+
+Unemployment actions should:
+
+create or update Income Plans
+
+appear on Home as reminders
+
+8️⃣ START A BUSINESS (PAID FEATURE)
+
+Menu item name stays exactly the same.
+
+Start a Business = guided intake → generated business plan
+Intake includes:
+
+reason for starting
+
+what they want to sell
+
+experience
+
+time availability
+
+income urgency
+
+state
+
+Generated Business Plan Includes:
+
+Business idea
+
+Business name + domain search
+
+Legal setup (state-aware)
+
+Recommended tools & platforms (from shared resources)
+
+Government contracts & grants (SAM.gov overview + links)
+
+This creates a Business Plan visible on Home.
+
+9️⃣ PAID ACCESS RULES
+
+Free users:
+
+Career Coach (basic)
+
+Jobs
+
+Money, Gigs, Monetization
+
+Unemployment resources
+
+Limited Home view
+
+Paid users unlock:
+
+Start a Business
+
+Business Plans
+
+Cross-feature intelligence
+
+Personalized resource recommendations
+
+Multiple active plans
+
+🎯 FINAL GOAL
+
+DreamShift should feel like:
+
+“Everything I do here builds on itself.”
+
+Not:
+
+isolated tools
+
+repeated inputs
+
+disconnected sections
+
+Build it calm, connected, resource-rich, and human.

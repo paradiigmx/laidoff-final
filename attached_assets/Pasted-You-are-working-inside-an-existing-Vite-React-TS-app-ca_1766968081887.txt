@@ -1,0 +1,214 @@
+You are working inside an existing Vite + React + TS app called DreamShift. Do NOT redesign the UI or hero. Do NOT change the marketing header/hero image at all. Only implement parsing + formatting constraints + PDF export.
+
+GOAL:
+- Make resume parsing reliable and deterministic.
+- Enforce strict “resume fit” constraints so output is clean.
+- Keep ONLY 3 templates (Modern, Executive, Minimal). Remove all other templates from UI and selection.
+- Remove “multiple page option” from UI. Pages should be automatic: preview shows 1+ pages only if content overflows. No user toggle.
+- Fix PDF export so “Print/PDF” exports a PDF using @react-pdf/renderer (not HTML print). HTML preview stays as-is.
+
+PART 1 — DATA MODEL (STRICT SCHEMA)
+Create/confirm a single canonical schema used everywhere:
+type StructuredResume = {
+  fullName: string;
+  title: string;
+  contact: {
+    phone?: string;
+    email?: string;
+    location?: string;
+    linkedin?: string;
+    website?: string;
+  };
+  summary: string; // 2–3 sentences max
+  experience: Array<{
+    role: string;
+    company: string;
+    location?: string;
+    dates: string;        // preserve as string
+    bullets: string[];    // normalized bullet list (no paragraphs)
+  }>;
+  skills: string[];       // “Skills” bucket (max 12)
+  software: string[];     // “Software/Tools” bucket (max 12)
+  education: Array<{
+    school: string;
+    degree: string;
+    dates?: string;
+  }>;
+  certifications?: string[];
+  awards?: string[];
+  rawText?: string;       // original extracted text for debugging
+};
+
+PART 2 — PARSER (FIX THE BAD PARSING)
+Implement a deterministic parser that converts raw resume text (from PDF extraction or pasted text) into StructuredResume.
+
+Add a new file:
+- src/services/resumeParser.ts
+
+Parser rules:
+1) Normalize text:
+  - Convert weird bullets (•, ∙, -, –) into a standard bullet token.
+  - Collapse multiple spaces.
+  - Preserve line breaks.
+2) Detect section headings (case-insensitive):
+  - SUMMARY
+  - EXPERIENCE
+  - SKILLS
+  - SOFTWARE (or TOOLS)
+  - EDUCATION
+  - CERTIFICATIONS (optional)
+  - AWARDS (optional)
+3) Contact block:
+  - fullName = first non-empty line (likely “Kyle A. Harris”).
+  - phone/email: parse patterns like PHONE:, EMAIL:, raw phone numbers, emails.
+4) EXPERIENCE parsing (most important):
+  - Each role header looks like: "<Month YYYY - Month YYYY | ROLE>" OR "<Month YYYY - Present | ROLE>" OR date range first, then pipe, then role.
+  - Next line(s) until bullets begin should contain company (e.g. "Amazon Web Services (AWS) - Teksystems" or "American Bar Association (ABA)").
+  - Bullets begin with normalized bullet token; collect until the next role header OR next section heading.
+  - Ensure role/company/dates are trimmed and non-empty.
+5) SKILLS parsing:
+  - In the source, skills lines are like "∙ Marketing Strategy," etc.
+  - Split by commas and line breaks, trim, remove trailing punctuation, remove duplicates.
+6) SOFTWARE parsing:
+  - Same rules as skills.
+7) EDUCATION parsing:
+  - Source has:
+      Southern Illinois University
+      Masters in Media Management
+      2013 - 2016
+    So detect school lines + degree line + optional dates line.
+8) SUMMARY parsing:
+  - From SUMMARY section: join lines into one paragraph.
+  - Strip extra whitespace.
+
+Add a parser result validator:
+- If experience is empty BUT the raw text contains "EXPERIENCE", log a warning and return a safe fallback instead of breaking.
+- Never put “instructional” or “AI notes” inside fields. Only resume content.
+
+Expose one function:
+export function parseResumeTextToStructuredResume(rawText: string): StructuredResume
+
+PART 3 — STRICT GENERATION CONSTRAINTS (THE “MAKE IT FIT” RULES)
+When user clicks Generate/Rewrite:
+- The AI is allowed to rewrite/clean content BUT MUST follow these strict constraints.
+
+Add constraints in one place:
+- src/services/resumeConstraints.ts
+
+Rules:
+A) Typography/Layout (applies to all templates)
+- Body font size: 12pt equivalent in CSS -> use 16px base? NO. For print sizing, use inches:
+  - Use CSS on resume page container: font-size: 12pt for body.
+  - Section headers: 12pt but bold + uppercase.
+  - Name: 18–20pt.
+- Line height: 1.15 for bullets; 1.2 for paragraphs.
+- Page: ALWAYS 8.5in x 11in; margins 0.5in all around.
+- No scaling / no “extended” page sizes.
+
+B) Summary constraints:
+- 2–3 sentences, 45–70 words total. No more than 450 characters.
+- No buzzword soup. Concrete claims only.
+
+C) Experience bullets constraints:
+- If parsed experience count == 3 roles: 4 bullets per role.
+- If 4 roles: 3 bullets per role.
+- If 5+ roles: 2 bullets per role.
+- Each bullet max 115 characters. No bullet may exceed 1 line “typical” length; enforce hard wrap by rewriting shorter.
+- Bullets must start with a strong verb; no first-person pronouns.
+
+D) Skills constraints:
+- skills[] max 12 items.
+- Each skill max 24 characters (short labels).
+- Remove duplicates and near-duplicates (e.g., “Brand Strategy” vs “Brand Management” keep one).
+- Prefer the most relevant to target job title if provided.
+
+E) Software constraints:
+- software[] max 12 items.
+- Keep product names clean (WordPress, SharePoint, Google Analytics, Marketo, Drupal, AEM, Workfront, etc.).
+
+F) Education constraints:
+- max 2 entries.
+- Format degree + school cleanly.
+
+Implement a function that applies constraints AFTER parsing and AFTER any AI rewrite:
+export function applyResumeConstraints(resume: StructuredResume, options?: { targetTitle?: string }): StructuredResume
+
+The function should:
+- Trim summary to limits.
+- Reduce bullet count per role based on number of roles.
+- Rewrite bullets that are too long by compressing text (simple heuristic: remove filler phrases, keep nouns/verbs).
+- Cap skills/software counts and shorten labels.
+
+PART 4 — TEMPLATES: KEEP ONLY 3
+Keep only:
+- TemplateModern
+- TemplateExecutive
+- TemplateMinimal (your Timeline or a simplified version)
+
+Remove other exports and remove them from the UI template selector.
+Make the template selector show only these 3. Do not break imports.
+
+PART 5 — PAGINATION (NO USER TOGGLE)
+Remove “page count / multiple pages option” from UI.
+In preview:
+- Render content into pages automatically if overflow occurs.
+- Use ONE consistent strategy:
+  - Measure content height in a hidden container with the exact same width/margins.
+  - Split by block-level sections (summary, each experience block, education, skills).
+  - Move blocks to next page when adding them would exceed printable height.
+- The user should never choose page count.
+
+Acceptance:
+- A long resume produces 2 pages automatically.
+- A short resume stays 1 page.
+- Page size never becomes “extended”.
+
+PART 6 — PDF EXPORT (FIX THE BROKEN APP)
+Right now the app breaks because it tries to import "@react-pdf/renderer" but it isn't installed or is imported in a Vite-incompatible way.
+
+Do the following:
+1) Install dependency:
+  - Add to package.json dependencies:
+    "@react-pdf/renderer": "^4.x" (use the latest compatible stable)
+2) Create:
+  - src/components/pdf/ResumePdfDocument.tsx
+  This uses @react-pdf/renderer components (Document, Page, Text, View) and renders the selected template in a PDF-friendly layout.
+  Keep PDF layout SIMPLE: just Modern template structure is fine for export even if preview uses HTML.
+3) Create:
+  - src/components/pdf/exportPdf.ts
+  Export function:
+    export async function exportResumeAsPdf(resume: StructuredResume, filename: string): Promise<void>
+  Use dynamic import to avoid Vite SSR issues:
+    const pdfMod = await import("@react-pdf/renderer");
+    const blob = await pdfMod.pdf(<ResumePdfDocument ... />).toBlob();
+    trigger download in browser.
+4) Wire “Print/PDF” button to call exportResumeAsPdf(...) and NOT window.print().
+
+Acceptance:
+- App runs (no Vite import-analysis failure).
+- Print/PDF downloads a real PDF.
+- No change to hero/header UI.
+
+PART 7 — DEBUGGING UI (MINIMAL BUT NECESSARY)
+Add a “Debug: Show Parsed JSON” collapsible panel (dev-only):
+- Shows the StructuredResume JSON after parsing + constraints
+- Helps verify parsing correctness.
+
+PART 8 — TEST WITH THIS REAL RESUME STRUCTURE
+Use this shape as a sanity check (based on the provided resume):
+- Name: Kyle A. Harris
+- Phone: 773-326-5595
+- Email: infoparadigmzero@gmail.com
+- Experience entries include:
+  - Digital Artist (Contract) — Amazon Web Services (AWS) - Teksystems — Oct 2023 - Dec 2024 — 4 bullets max if 3 roles, else 3 if 4 roles.
+  - Digital Content Manager — American Bar Association — Jul 2018 - Oct 2023
+  - Senior Marketing Specialist — American Bar Association — Mar 2017 - Jul 2018
+  - Marketing and Web Specialist — American Bar Association — Dec 2015 - Mar 2017
+- Skills list and Software list must be separate, capped at 12 each.
+- Summary must be 2–3 sentences (45–70 words).
+
+DELIVERABLES:
+- Implement the parser, constraints, template reduction, auto pagination, and PDF export.
+- Update only necessary files; do not touch unrelated parts.
+- Ensure TypeScript types compile.
+- No “AI notes” or prompt text should ever appear in resume fields.

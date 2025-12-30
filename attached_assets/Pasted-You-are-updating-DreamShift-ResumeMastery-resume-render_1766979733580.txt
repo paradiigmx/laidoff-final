@@ -1,0 +1,147 @@
+You are updating DreamShift / ResumeMastery resume rendering so EVERY template (Modern, Executive, Minimal) always fits cleanly on Letter pages and never “runs over”, never stretches page height, and never relies on ugly mid-sentence truncation (“…” after every bullet) as the primary layout solution.
+
+GOAL
+- Keep the existing UI/hero unchanged.
+- Keep exactly 3 templates: Modern, Executive, Minimal.
+- Remove any user-facing “page count / target length pages” selector. Pagination is automatic.
+- Output must render as true US Letter pages: 8.5in x 11in with 0.5in margins in BOTH preview and PDF export.
+- If content cannot fit on one page after compression rules, automatically create page 2 and flow remaining blocks to it.
+- Apply the SAME fit logic to all templates by centralizing it in a shared “Fit Engine” used by template renderers and PDF export.
+
+WHAT’S BROKEN IN THE CURRENT OUTPUT (MUST FIX)
+- Long resumes with many roles (e.g., 6+ positions) overflow and/or compress badly.
+- Skills explode and squeeze the document.
+- Bullets are being truncated with ellipses too early and too often (looks cheap).
+- Some sections (certifications/skills) crowd out experience.
+
+NON-NEGOTIABLE LAYOUT RULES (GLOBAL)
+1) Page container must always be fixed height 11in (never larger). No stretching.
+2) Page content area = full page minus margins (0.5in all around).
+3) Never shrink header/hero. Only shrink resume content using the rules below.
+4) Never allow any section to print outside page bounds.
+5) Prefer removing/condensing content BEFORE reducing font size.
+
+CONTENT PRIORITY ORDER (most important first)
+1) Experience
+2) Profile/Summary
+3) Skills
+4) Certifications
+5) Education
+6) Awards
+If there’s overflow, reduce lower priority sections first.
+
+HARD LIMITS (apply to ALL templates)
+A) Skills in preview:
+- Keep all skills in the data model, but in the resume preview render only MAX_SKILLS_SHOWN.
+- Default MAX_SKILLS_SHOWN = 10.
+- Render remaining as a single chip “+X more” (do NOT render the extra chips).
+- If Certifications exists, reduce MAX_SKILLS_SHOWN to 8 automatically (sidebar density control).
+
+B) Experience roles and bullets:
+- Determine roleCount = experience.length.
+- Role bullets:
+  - roleCount <= 3: maxBulletsPerRole = 4
+  - roleCount == 4: maxBulletsPerRole = 3
+  - roleCount == 5: maxBulletsPerRole = 2
+  - roleCount >= 6: maxBulletsPerRole = 1 (SHIP SAFE MODE)
+- Bullet length:
+  - Default maxWordsPerBullet = 16.
+  - Do not append ellipses unless trimming is required by maxWordsPerBullet.
+  - Trim by words, keep clean punctuation, and only add “…” once at the end.
+- Role description formatting:
+  - Never allow paragraph bullets; each bullet must be one line-ish (wrap OK, but short).
+  - Enforce line-height and margins (see Spacing Rules).
+
+C) Profile/Summary:
+- Default: 50–75 words.
+- Hard cap: 75 words.
+- If roleCount >= 5, cap at 45–55 words.
+- Summary must be 2–4 sentences max.
+
+D) Certifications:
+- Show max 1 certification on page 1 if roleCount >= 5.
+- Additional certifications move to page 2 (if present).
+- Certification line length cap: 90 chars; trim with ellipsis if longer.
+
+E) Education:
+- If roleCount >= 5, education is compact: degree + school + year only (no bullets).
+
+SPACING + TYPOGRAPHY RULES (apply to all templates via shared CSS/tokens)
+- Base font: 11.5pt (NOT 12) for body. Headings scale from that.
+- Line-height: 1.28 body, 1.15 headings.
+- Section spacing:
+  - section title bottom margin: 6px
+  - section bottom padding: 10px
+  - role block bottom margin: 10px
+  - bullet list margin-top: 4px
+  - bullet item margin: 2px 0
+- Sidebar width rules:
+  - Modern template: sidebar fixed to 2.35in, main column gets remainder
+  - Never allow sidebar to expand beyond that.
+- Bullets:
+  - list-style-position: outside
+  - padding-left: 1.1em (so bullets align cleanly)
+  - no weird indentation
+
+THE FIT ENGINE (REQUIRED)
+Implement a shared function `applyFitConstraints(resumeData, templateId)` that returns a “render plan”:
+- pageCount (1 or more)
+- adjusted display limits (skills shown, bullets/role, summary length)
+- block list split into pages (experience blocks flow first, then lower priority)
+This engine runs whenever:
+- resumeData changes
+- template changes
+- accent color changes (since it can affect layout subtly)
+- before PDF export
+
+OVERFLOW DETECTION (REQUIRED)
+In the preview renderer, measure overflow using a ref:
+- overflow = content.scrollHeight > content.clientHeight + 1
+Do this per page container.
+If overflow on page 1 after applying the hard limits, do:
+1) Reduce MAX_SKILLS_SHOWN: 10 -> 8 -> 6
+2) Reduce maxWordsPerBullet: 16 -> 14 -> 12
+3) Reduce summary cap: 75 -> 60 -> 45
+4) Reduce maxBulletsPerRole by 1 (but not below 1)
+If STILL overflow, move the lowest priority blocks to page 2 in this order:
+Awards -> Education -> Certifications (extra) -> Skills (extra) -> then remaining experience (last resort)
+
+CRITICAL: Never reduce font size below 11pt.
+Font shrinking is the LAST resort and only:
+11.5 -> 11.0
+If still overflow, paginate.
+
+PAGINATION BEHAVIOR
+- Page 1 always contains header/contact + profile + skills + first experience roles.
+- Page 2 continues experience roles first, then remaining sections.
+- Sidebar repeats on every page for Modern template.
+- For Executive/Minimal templates, header repeats on page 2 in a compact form (name + contact line only).
+
+PDF EXPORT FIX (APP CURRENTLY BROKE HERE)
+- Do NOT dynamically import “@react-pdf/renderer” from a file that runs in the browser bundler if it’s not installed.
+- Use ONE export method and make it consistent:
+  OPTION A (recommended): Use `window.print()` with a print-only stylesheet + CSS page size set to Letter, and export via browser print-to-PDF.
+  OPTION B: If you already have @react-pdf/renderer installed and working, keep it, but ensure:
+    - it is a dependency
+    - import path is correct
+    - export function is isolated in a server-safe / build-safe module
+Pick A if unsure. Don’t break the app build.
+
+DELIVERABLES YOU MUST PRODUCE
+1) Add the Fit Engine and wire it to all 3 templates.
+2) Enforce the hard limits and spacing rules.
+3) Remove multi-page selector UI; pages happen automatically.
+4) Ensure the sample “Ryan Baffield” style resume with 6+ roles becomes clean:
+   - 1 bullet per role (because roleCount>=6)
+   - skills limited with “+X more”
+   - summary shortened
+   - creates page 2 automatically if needed
+5) Ensure no template stretches page height, and the hero/header does not change.
+6) Provide a quick test plan: 3 roles, 4 roles, 6 roles, with/without certs.
+
+IMPORTANT IMPLEMENTATION DETAIL
+- Do NOT rewrite the entire app.
+- Make minimal, targeted changes:
+  - create `fitEngine.ts` (or similar) for constraints + pagination plan
+  - adjust template components to accept a “render plan”
+  - add print CSS if using window.print export

@@ -1,0 +1,7 @@
+{
+  "name": "LaidOff-2",
+  "description": "An intelligent career assistant that rewrites your resume using Gemini 2.5 and finds relevant job openings with Google Search grounding.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
