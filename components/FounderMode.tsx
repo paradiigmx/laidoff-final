@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { BusinessProfile, AppView, BusinessNameIdea, FounderProfile } from '../types';
-import { getBusinessProfiles, saveBusinessProfile } from '../services/storageService';
+import { getBusinessProfiles, saveBusinessProfile, deleteBusinessProfile, updateBusinessProfile } from '../services/storageService';
 import { generateBusinessNames, generateLogoOptions } from '../services/geminiService';
+import { MultiSelectField } from './MultiSelectField';
 import heroImage from '@assets/public-bar-058_1766520289277.jpg';
 
 const SKILL_OPTIONS = [
@@ -109,6 +110,8 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
     problemBeingSolved: '',
     pricingModel: ''
   });
+  const [showSaveProfileModal, setShowSaveProfileModal] = useState(false);
+  const [selectedNameToSave, setSelectedNameToSave] = useState<BusinessNameIdea | null>(null);
 
     useEffect(() => {
     const profiles = getBusinessProfiles();
@@ -159,13 +162,52 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         }
     };
 
+  const handleSaveBusinessProfile = (nameIdea: BusinessNameIdea) => {
+    const newProfile = saveBusinessProfile({
+      businessName: nameIdea.name,
+      businessType: 'Product',
+      soloOrTeam: 'Solo',
+      stage: 'Idea only',
+      timeAvailablePerWeek: '10-20 hours',
+      incomeUrgency: 'Immediate',
+      existingAssets: selectedSkills.slice(0, 3)
+    });
+    const updatedProfiles = getBusinessProfiles();
+    setBusinessProfiles(updatedProfiles);
+    setSelectedProfileId(newProfile.id);
+    setShowSaveProfileModal(false);
+    setSelectedNameToSave(null);
+    alert(`Business profile "${nameIdea.name}" saved!`);
+  };
+
+  const handleLoadProfile = (profile: BusinessProfile) => {
+    setSelectedProfileId(profile.id);
+    setSelectedBusinessName(profile.businessName);
+    if (profile.existingAssets) {
+      const profileSkills = profile.existingAssets.filter(a => SKILL_OPTIONS.includes(a));
+      if (profileSkills.length > 0) {
+        setSelectedSkills(profileSkills);
+      }
+    }
+  };
+
+  const handleDeleteProfile = (profileId: string) => {
+    if (confirm('Are you sure you want to delete this business profile?')) {
+      deleteBusinessProfile(profileId);
+      const updatedProfiles = getBusinessProfiles();
+      setBusinessProfiles(updatedProfiles);
+      if (selectedProfileId === profileId) {
+        setSelectedProfileId(updatedProfiles.length > 0 ? updatedProfiles[0].id : null);
+      }
+    }
+  };
+
   const checkDomainAvailability = async (domain: string) => {
-    // Simple domain check - in production, this would use a real domain API
     const cleanDomain = domain.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9-]/g, '');
     const extensions = ['.com', '.io', '.co', '.net', '.org'];
     const results = extensions.map(ext => ({
       domain: `${cleanDomain}${ext}`,
-      available: Math.random() > 0.3 // Simulated - replace with real API
+      available: Math.random() > 0.3
     }));
     setDomainResults(results);
   };
@@ -440,42 +482,20 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Tell us about your business</h2>
           <div className="space-y-6">
-                    <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Top Skills (select multiple)</label>
-              <select
-                multiple
-                value={selectedSkills}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  const values = Array.from(e.target.selectedOptions, option => option.value);
-                  setSelectedSkills(values);
-                }}
-                className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 outline-none min-h-[120px]"
-                size={5}
-              >
-                {SKILL_OPTIONS.map(skill => (
-                  <option key={skill} value={skill}>{skill}</option>
-                ))}
-              </select>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
-                    </div>
-                    <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Interests / Passions (select multiple)</label>
-                        <select 
-                multiple
-                value={selectedInterests}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  const values = Array.from(e.target.selectedOptions, option => option.value);
-                  setSelectedInterests(values);
-                }}
-                className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 outline-none min-h-[120px]"
-                size={5}
-              >
-                {INTEREST_OPTIONS.map(interest => (
-                  <option key={interest} value={interest}>{interest}</option>
-                ))}
-              </select>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
-            </div>
+                    <MultiSelectField
+                      label="Top Skills"
+                      options={SKILL_OPTIONS}
+                      selectedValues={selectedSkills}
+                      onChange={setSelectedSkills}
+                      placeholder="Select skills..."
+                    />
+                    <MultiSelectField
+                      label="Interests / Passions"
+                      options={INTEREST_OPTIONS}
+                      selectedValues={selectedInterests}
+                      onChange={setSelectedInterests}
+                      placeholder="Select interests..."
+                    />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Industry (Optional)</label>
@@ -559,17 +579,25 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
                             </div>
                 <div className="text-sm font-mono text-purple-600 dark:text-purple-400 mb-3 bg-purple-50 dark:bg-purple-900/20 inline-block px-2 py-1 rounded">{idea.domain}</div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">{idea.meaning}</p>
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{idea.industryFit}</span>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{idea.industryFit}</span>
+                    <button
+                      onClick={() => {
+                        setSelectedBusinessName(idea.name);
+                        setCurrentView('logo-generator');
+                      }}
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-bold text-sm"
+                    >
+                      Use for Logo →
+                    </button>
+                  </div>
                   <button
-                    onClick={() => {
-                      setSelectedBusinessName(idea.name);
-                      setCurrentView('logo-generator');
-                    }}
-                    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-bold text-sm"
+                    onClick={() => handleSaveBusinessProfile(idea)}
+                    className="w-full py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800"
                   >
-                    Use for Logo →
-                        </button>
+                    💾 Save as Business Profile
+                  </button>
                 </div>
               </div>
                     ))}
@@ -578,6 +606,38 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
             )}
         </div>
     );
+
+  const renderProfileSelector = () => (
+    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 mb-8">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-xl">📁</span>
+        <div>
+          <h3 className="font-bold text-slate-900 dark:text-white">Active Business Profile</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Select a profile to auto-fill business details across tools</p>
+        </div>
+      </div>
+      <select
+        value={selectedProfileId || ''}
+        onChange={(e) => {
+          const profile = businessProfiles.find(p => p.id === e.target.value);
+          if (profile) {
+            handleLoadProfile(profile);
+          } else {
+            setSelectedProfileId(null);
+          }
+        }}
+        className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+      >
+        <option value="">Select a business profile...</option>
+        {businessProfiles.map(profile => (
+          <option key={profile.id} value={profile.id}>{profile.businessName}</option>
+        ))}
+      </select>
+      {businessProfiles.length === 0 && (
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">No saved profiles yet. Generate a business name and save it as a profile to get started.</p>
+      )}
+    </div>
+  );
 
   const renderLogoGenerator = () => (
     <div className="max-w-5xl mx-auto px-4 py-12">
@@ -588,6 +648,8 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         ← Back to Overview
       </button>
       <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-8">🖼️ Logo Generator</h1>
+      
+      {renderProfileSelector()}
       
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -678,6 +740,8 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         ← Back to Overview
       </button>
       <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-8">🌐 Domain Availability Check</h1>
+      
+      {renderProfileSelector()}
       
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md mb-8">
         <div className="mb-6">
@@ -771,21 +835,7 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">📅 7-Day Roadmap</h1>
         <p className="text-slate-600 dark:text-slate-400 mb-8">Create a realistic plan to earn your first dollar</p>
 
-        {selectedProfile ? (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 mb-6 border border-emerald-200 dark:border-emerald-700">
-            <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300">Using Business Profile: {selectedProfile.businessName}</p>
-                            </div>
-        ) : (
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-6 border border-amber-200 dark:border-amber-700">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-2">No Business Profile Selected</p>
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="text-sm font-bold text-amber-700 dark:text-amber-400 hover:underline"
-            >
-              Create a Business Profile first →
-            </button>
-                        </div>
-        )}
+        {renderProfileSelector()}
 
         {!roadmapResult ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md">
@@ -914,21 +964,7 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">🎤 Pitch Builder</h1>
         <p className="text-slate-600 dark:text-slate-400 mb-8">Craft your perfect elevator pitch</p>
 
-        {selectedProfile ? (
-          <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 mb-6 border border-teal-200 dark:border-teal-700">
-            <p className="text-sm font-bold text-teal-900 dark:text-teal-300">Using Business Profile: {selectedProfile.businessName}</p>
-                                    </div>
-        ) : (
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-6 border border-amber-200 dark:border-amber-700">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-2">No Business Profile Selected</p>
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="text-sm font-bold text-amber-700 dark:text-amber-400 hover:underline"
-            >
-              Create a Business Profile first →
-            </button>
-                            </div>
-        )}
+        {renderProfileSelector()}
 
         {!pitchResult ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md">
@@ -1039,21 +1075,7 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
         <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">💰 Revenue Strategy</h1>
         <p className="text-slate-600 dark:text-slate-400 mb-8">Identify your best monetization paths</p>
 
-        {selectedProfile ? (
-          <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-4 mb-6 border border-cyan-200 dark:border-cyan-700">
-            <p className="text-sm font-bold text-cyan-900 dark:text-cyan-300">Using Business Profile: {selectedProfile.businessName}</p>
-          </div>
-        ) : (
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-6 border border-amber-200 dark:border-amber-700">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-2">No Business Profile Selected</p>
-                                                <button 
-              onClick={() => setShowProfileModal(true)}
-              className="text-sm font-bold text-amber-700 dark:text-amber-400 hover:underline"
-                                                >
-              Create a Business Profile first →
-                                                </button>
-                                            </div>
-        )}
+        {renderProfileSelector()}
 
         {!strategyResult ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-md">
