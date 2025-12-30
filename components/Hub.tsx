@@ -550,86 +550,7 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                         </div>
                     )}
 
-                    {/* Quick Actions - Moved to Top */}
-                    <section>
-                        <div className="mb-8 flex items-center gap-5">
-                            <div className="w-14 h-14 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-3xl shadow-xl">🚀</div>
-                            <div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">Quick Actions</h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Jump to common workflows</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Build Resume', icon: '📄', view: AppView.RESUME },
-                                { label: 'Find Jobs', icon: '🔍', view: AppView.JOBS },
-                                { label: 'Coaching', icon: '🧠', view: AppView.COACH },
-                                { label: 'Start Business', icon: '🚀', view: AppView.FOUNDER }
-                            ].map((action, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => onNavigate(action.view)}
-                                    className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-700 dark:to-slate-800 text-white rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all"
-                                >
-                                    <div className="text-3xl mb-2">{action.icon}</div>
-                                    <div className="font-bold text-sm">{action.label}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-
-                    {/* All Navigation Items with Hero Images */}
-                    <section>
-                        <div className="mb-8 flex items-center gap-5">
-                            <div className="w-14 h-14 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-3xl shadow-xl">🧭</div>
-                            <div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">All Tools</h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Access all features from the Hub</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Resume Lab', icon: '✨', view: AppView.RESUME, image: resumeHeroImage, gradient: 'from-rose-300 via-pink-200 to-white' },
-                                { label: 'Job Hunter', icon: '🔍', view: AppView.JOBS, image: jobHeroImage, gradient: 'from-blue-300 via-cyan-200 to-white' },
-                                { label: 'Gigs', icon: '💸', view: AppView.MONEY, image: moneyHeroImage, gradient: 'from-emerald-300 via-teal-200 to-white' },
-                                { label: 'Monetization', icon: '📈', view: AppView.MONETIZATION, image: monetizationHeroImage, gradient: 'from-blue-300 via-indigo-200 to-white' },
-                                { label: 'Unemployment', icon: '🏛️', view: AppView.UNEMPLOYMENT, image: unemploymentHeroImage, gradient: 'from-slate-300 via-gray-200 to-white' },
-                                { label: 'Assistance', icon: '🤝', view: AppView.ASSISTANCE, image: assistanceHeroImage, gradient: 'from-cyan-300 via-blue-200 to-white' },
-                                { label: 'Coaching', icon: '🧠', view: AppView.COACH, image: coachHeroImage, gradient: 'from-purple-300 via-indigo-200 to-white' },
-                                { label: 'Founder', icon: '🚀', view: AppView.FOUNDER, image: founderHeroImage, gradient: 'from-amber-300 via-orange-200 to-white', useGradientText: true }
-                            ].map((item, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => onNavigate(item.view)}
-                                    className="group relative rounded-2xl overflow-hidden bg-slate-900 text-white shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 h-48"
-                                >
-                                    <div className="absolute inset-0">
-                                        <img 
-                                            src={item.image} 
-                                            alt={item.label}
-                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity"
-                                        />
-                                        <div className={`absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-900/50`}></div>
-                                    </div>
-                                    <div className="relative z-10 p-5 h-full flex flex-col justify-between">
-                                        {!item.useGradientText && <div className="text-3xl mb-2">{item.icon}</div>}
-                                        <div>
-                                            {item.useGradientText ? (
-                                                <h3 className="font-black text-lg mb-1">
-                                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                                                        🚀 Founder
-                                                    </span>
-                                                </h3>
-                                            ) : (
-                                                <h3 className="font-black text-lg mb-1">{item.label}</h3>
-                                            )}
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-
+                    {/* Stats - Moved to Top */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                             <div className="text-3xl font-black text-blue-600">{pendingTasks}</div>
@@ -652,6 +573,57 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                             </div>
                         </div>
                     </div>
+
+                    {/* All Navigation Items with Hero Images - No emojis, centered titles */}
+                    <section>
+                        <div className="mb-8 flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-3xl shadow-xl">
+                                <svg className="w-7 h-7 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">All Tools</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Access all features from the Hub</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                                { label: 'Resume Lab', view: AppView.RESUME, image: resumeHeroImage },
+                                { label: 'Job Hunter', view: AppView.JOBS, image: jobHeroImage },
+                                { label: 'Gigs', view: AppView.MONEY, image: moneyHeroImage },
+                                { label: 'Monetization', view: AppView.MONETIZATION, image: monetizationHeroImage },
+                                { label: 'Unemployment', view: AppView.UNEMPLOYMENT, image: unemploymentHeroImage },
+                                { label: 'Assistance', view: AppView.ASSISTANCE, image: assistanceHeroImage },
+                                { label: 'Coaching', view: AppView.COACH, image: coachHeroImage },
+                                { label: 'Founder', view: AppView.FOUNDER, image: founderHeroImage, isFounder: true }
+                            ].map((item, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => onNavigate(item.view)}
+                                    className="group relative rounded-2xl overflow-hidden bg-slate-900 text-white shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 h-44"
+                                >
+                                    <div className="absolute inset-0">
+                                        <img 
+                                            src={item.image} 
+                                            alt={item.label}
+                                            className="w-full h-full object-cover opacity-70 group-hover:opacity-80 group-hover:scale-105 transition-all duration-300"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/60 to-slate-900/30"></div>
+                                    </div>
+                                    <div className="relative z-10 h-full flex items-center justify-center">
+                                        {item.isFounder ? (
+                                            <h3 className="font-black text-xl text-center">
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+                                                    Founder
+                                                </span>
+                                            </h3>
+                                        ) : (
+                                            <h3 className="font-black text-xl text-center text-white drop-shadow-lg">{item.label}</h3>
+                                        )}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
 
                     {favorites.length > 0 && (
                         <section>
@@ -702,6 +674,35 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{resource.icon}</div>
                                     <h3 className="font-bold text-slate-900 dark:text-white mb-1">{resource.title}</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">{resource.desc}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Quick Actions - At Bottom */}
+                    <section>
+                        <div className="mb-8 flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-3xl shadow-xl">
+                                <svg className="w-7 h-7 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">Quick Actions</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Jump to common workflows</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                                { label: 'Build Resume', view: AppView.RESUME },
+                                { label: 'Find Jobs', view: AppView.JOBS },
+                                { label: 'Coaching', view: AppView.COACH },
+                                { label: 'Start Business', view: AppView.FOUNDER }
+                            ].map((action, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => onNavigate(action.view)}
+                                    className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-700 dark:to-slate-800 text-white rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all text-center"
+                                >
+                                    <div className="font-bold text-sm">{action.label}</div>
                                 </button>
                             ))}
                         </div>

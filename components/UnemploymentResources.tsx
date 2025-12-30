@@ -87,8 +87,16 @@ const SectionHeader = ({ title, subtitle, icon }: { title: string, subtitle: str
     </div>
 );
 
+const RIBBON_COLORS: Record<string, string> = {
+    'Start Here': 'from-emerald-500 to-green-500',
+    'Essential': 'from-blue-500 to-indigo-500',
+    'Legal Guard': 'from-red-500 to-rose-500',
+    'default': 'from-purple-500 to-indigo-500'
+};
+
 const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) => {
     const colorClass = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
+    const ribbonColor = badge ? (RIBBON_COLORS[badge] || RIBBON_COLORS['default']) : '';
     const [isFav, setIsFav] = useState(false);
     const [isInTasks, setIsInTasks] = useState(false);
     const [isInReminders, setIsInReminders] = useState(false);
@@ -104,7 +112,7 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFavorite({ title, desc, link, icon, category: 'unemployment' });
+        toggleFavorite({ id: link, title, description: desc, link, category: 'unemployment', date: new Date().toISOString() });
         setIsFav(!isFav);
     };
     
@@ -154,18 +162,18 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
             <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${colorClass.gradient}`}></div>
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClass.gradient} opacity-5 dark:opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-15 dark:group-hover:opacity-25 transition-opacity duration-500`}></div>
             
-            <div className="p-7 flex flex-col h-full relative z-10">
+            {badge && (
+                <div className={`absolute bottom-0 left-0 right-0 py-2 px-4 bg-gradient-to-r ${ribbonColor} text-white text-center z-20`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{badge}</span>
+                </div>
+            )}
+            
+            <div className={`p-7 flex flex-col h-full relative z-10 ${badge ? 'pb-14' : ''}`}>
                 <div className="flex justify-between items-start mb-5">
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass.gradient} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 border border-white/50`}>
                         <span className="drop-shadow-sm text-white">{icon}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {badge && (
-                            <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest shadow-lg">
-                                {badge}
-                            </span>
-                        )}
-                        <div className="flex gap-1">
+                    <div className="flex gap-1">
                             <button
                                 onClick={handleFavorite}
                                 className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
@@ -199,7 +207,6 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
                             >
                                 ⏰
                             </button>
-                        </div>
                     </div>
                 </div>
                 <a 

@@ -395,36 +395,29 @@ export const generateLogo = async (name: string, tone: string, industry: string)
 
 export const generateLogoOptions = async (name: string, industry: string, style: string): Promise<string[]> => {
     try {
-        const variations = [`Style: ${style}. Minimal`, `Style: ${style}. Abstract`, `Style: ${style}. Typographic`, `Style: ${style}. Modern` ];
+        const variations = [`Minimal ${style}`, `Abstract ${style}`, `Typographic ${style}`, `Modern ${style}`];
         const results = await Promise.all(variations.map(async (v) => {
             try {
-                const response = await getAI().models.generateContent({
-                    model: "gemini-2.0-flash-exp",
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Create a professional logo for "${name}" in the ${industry} industry. Style: ${v}. The logo should be clean, modern, and suitable for business use. White background.` 
-                        }] 
-                    }],
+                const response = await getAI().models.generateImages({
+                    model: "imagen-3.0-generate-002",
+                    prompt: `Professional business logo for "${name}" company in the ${industry} industry. Style: ${v}. Clean, simple, suitable for business cards and websites. White or transparent background. No text unless it's the company name.`,
+                    config: {
+                        numberOfImages: 1,
+                    }
                 });
                 
-                if (!response.candidates || response.candidates.length === 0) {
-                    console.error('No candidates in response');
+                if (!response.generatedImages || response.generatedImages.length === 0) {
+                    console.error('No images generated');
                     return null;
                 }
                 
-                const candidate = response.candidates[0];
-                if (!candidate.content || !candidate.content.parts) {
-                    console.error('No content parts in candidate');
+                const image = response.generatedImages[0];
+                if (!image.image || !image.image.imageBytes) {
+                    console.error('No image bytes in response');
                     return null;
                 }
                 
-                const p = candidate.content.parts.find((part: any) => part.inlineData);
-                if (!p || !p.inlineData) {
-                    console.error('No inline data found in parts');
-                    return null;
-                }
-                
-                return `data:image/png;base64,${p.inlineData.data}`;
+                return `data:image/png;base64,${image.image.imageBytes}`;
             } catch (e: any) {
                 console.error('Error generating logo variation:', e);
                 return null;

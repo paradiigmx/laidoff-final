@@ -445,7 +445,7 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
               <select
                 multiple
                 value={selectedSkills}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   const values = Array.from(e.target.selectedOptions, option => option.value);
                   setSelectedSkills(values);
                 }}
@@ -463,7 +463,7 @@ export const FounderMode: React.FC<FounderModeProps> = ({ onNavigate }) => {
                         <select 
                 multiple
                 value={selectedInterests}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   const values = Array.from(e.target.selectedOptions, option => option.value);
                   setSelectedInterests(values);
                 }}

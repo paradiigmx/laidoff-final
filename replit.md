@@ -80,6 +80,20 @@ Configured for autoscale deployment:
 
 ## Recent Changes
 
+**December 30, 2025 - Hub Layout & UI Improvements**
+- Restructured Hub page Overview tab layout:
+  - Stats section (Pending Tasks, Completed, Favorites, Monthly Surplus) moved to top
+  - All Tools section with centered titles and no emojis on card icons
+  - Quick Actions section moved to bottom of page
+  - SVG icons replace emojis in section headers for cleaner look
+- Updated badge styling in MonetizationResources and UnemploymentResources:
+  - Changed from top-right pills to colored bottom ribbons
+  - Added RIBBON_COLORS mapping for semantic badge colors
+- Fixed Logo Generator in FounderMode:
+  - Updated from gemini-2.0-flash-exp to imagen-3.0-generate-002 model
+  - Uses generateImages API method for proper image generation
+- Fixed TypeScript errors in FounderMode.tsx for multi-select elements
+
 **December 2025 - Resume Editor Tab Redesign**
 - Reorganized Resume View sidebar from 4 tabs to 3 tabs:
   - Content: New tab with form fields for editing all resume sections (Contact Info, Summary, Experience, Education, Skills, Certifications, Awards)
