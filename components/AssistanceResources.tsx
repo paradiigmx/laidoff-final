@@ -18,6 +18,17 @@ const COLOR_CLASSES: Record<string, { gradient: string }> = {
     rose: { gradient: 'from-rose-500 to-rose-600' },
 };
 
+const RIBBON_COLORS: Record<string, string> = {
+    '24/7 Support': 'from-orange-500 to-red-500',
+    'Gov Portal': 'from-slate-700 to-slate-900',
+    'Marketplace': 'from-blue-500 to-cyan-500',
+    'Always Active': 'from-purple-500 to-indigo-500',
+    'Essential': 'from-pink-500 to-rose-500',
+    'Start Here': 'from-emerald-500 to-green-500',
+    'Federal': 'from-indigo-500 to-blue-600',
+    'default': 'from-teal-500 to-cyan-500'
+};
+
 const SectionHeader = ({ title, subtitle, icon }: { title: string, subtitle: string, icon: string }) => (
     <div className="mb-12 scroll-mt-28 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 dark:border-slate-700 pb-8">
         <div className="flex items-center gap-5">
@@ -36,6 +47,7 @@ const SectionHeader = ({ title, subtitle, icon }: { title: string, subtitle: str
 
 const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) => {
     const colorClass = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
+    const ribbonColor = badge ? (RIBBON_COLORS[badge] || RIBBON_COLORS['default']) : '';
     const [isFav, setIsFav] = useState(false);
     const [isInTasks, setIsInTasks] = useState(false);
     const [isInReminders, setIsInReminders] = useState(false);
@@ -51,7 +63,14 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFavorite({ title, desc, link, icon, category: 'assistance' });
+        toggleFavorite({
+            id: link,
+            title,
+            link,
+            description: desc,
+            category: 'assistance',
+            date: new Date().toISOString()
+        });
         setIsFav(!isFav);
     };
     
@@ -97,64 +116,63 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
     };
     
     return (
-        <div className="group relative flex flex-col bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 rounded-3xl border-2 border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:border-slate-200 dark:hover:border-slate-600 hover:-translate-y-2 transition-all duration-500 h-full overflow-hidden">
+        <a 
+            href={link} 
+            target="_blank" 
+            rel="noreferrer"
+            className="group relative flex flex-col bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 rounded-3xl border-2 border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:border-slate-200 dark:hover:border-slate-600 hover:-translate-y-2 transition-all duration-500 h-full overflow-hidden cursor-pointer"
+        >
             <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${colorClass.gradient}`}></div>
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClass.gradient} opacity-5 dark:opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-15 dark:group-hover:opacity-25 transition-opacity duration-500`}></div>
             
-            <div className="p-7 flex flex-col h-full relative z-10">
+            {badge && (
+                <div className={`absolute bottom-0 left-0 right-0 py-2 px-4 bg-gradient-to-r ${ribbonColor} text-white text-center`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{badge}</span>
+                </div>
+            )}
+            
+            <div className={`p-7 flex flex-col h-full relative z-10 ${badge ? 'pb-14' : ''}`}>
                 <div className="flex justify-between items-start mb-5">
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass.gradient} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 border border-white/50`}>
                         <span className="drop-shadow-sm text-white">{icon}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {badge && (
-                            <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest shadow-lg">
-                                {badge}
-                            </span>
-                        )}
-                        <div className="flex gap-1">
-                            <button
-                                onClick={handleFavorite}
-                                className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
-                                    isFav 
-                                        ? 'bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700' 
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:border-pink-200 dark:hover:border-pink-800'
-                                }`}
-                                title={isFav ? 'Remove from favorites' : 'Add to favorites'}
-                            >
-                                ❤️
-                            </button>
-                            <button
-                                onClick={handleToggleTask}
-                                className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
-                                    isInTasks 
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700' 
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800'
-                                }`}
-                                title={isInTasks ? 'Remove from tasks' : 'Add to tasks'}
-                            >
-                                ✅
-                            </button>
-                            <button
-                                onClick={handleToggleReminder}
-                                className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
-                                    isInReminders 
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' 
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800'
-                                }`}
-                                title={isInReminders ? 'Remove from reminders' : 'Add to reminders'}
-                            >
-                                ⏰
-                            </button>
-                        </div>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={handleFavorite}
+                            className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
+                                isFav 
+                                    ? 'bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:border-pink-200 dark:hover:border-pink-800'
+                            }`}
+                            title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                            {isFav ? '❤️' : '🤍'}
+                        </button>
+                        <button
+                            onClick={handleToggleTask}
+                            className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
+                                isInTasks 
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800'
+                            }`}
+                            title={isInTasks ? 'Remove from tasks' : 'Add to tasks'}
+                        >
+                            ✅
+                        </button>
+                        <button
+                            onClick={handleToggleReminder}
+                            className={`w-8 h-8 rounded-lg border flex items-center justify-center text-lg transition-all ${
+                                isInReminders 
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-40 hover:opacity-60 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800'
+                            }`}
+                            title={isInReminders ? 'Remove from reminders' : 'Add to reminders'}
+                        >
+                            ⏰
+                        </button>
                     </div>
                 </div>
-                <a 
-                    href={link} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="flex-1 flex flex-col"
-                >
+                <div className="flex-1 flex flex-col">
                     <h4 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors flex items-center gap-2">
                         {title}
                         <span className="opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-500 text-lg font-bold">↗</span>
@@ -163,9 +181,9 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
                     <div className="mt-5 pt-4 border-t-2 border-slate-100 dark:border-slate-700 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-brand-500 transition-colors">
                         Visit Official Site →
                     </div>
-                </a>
+                </div>
             </div>
-        </div>
+        </a>
     );
 };
 

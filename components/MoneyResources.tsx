@@ -11,11 +11,34 @@ interface ResourceDetails {
     bestFit: string;
 }
 
+const RIBBON_COLORS: Record<string, string> = {
+    'High Reliability': 'from-emerald-500 to-green-500',
+    'Highest Volume': 'from-blue-500 to-indigo-500',
+    'Flexible Path': 'from-blue-400 to-blue-600',
+    'Daily Pay Opt': 'from-amber-500 to-orange-500',
+    'Fast Onboarding': 'from-blue-600 to-indigo-600',
+    'Benefits Inc': 'from-blue-700 to-blue-900',
+    'Top Volume': 'from-red-500 to-red-600',
+    'Higher Tips': 'from-orange-400 to-orange-600',
+    'Med Eligible': 'from-purple-500 to-indigo-500',
+    'Elite Platform': 'from-slate-700 to-slate-900',
+    'Wide Access': 'from-teal-500 to-cyan-500',
+    'Vetted Clients': 'from-purple-500 to-indigo-500',
+    'default': 'from-teal-500 to-cyan-500'
+};
+
 const ResourceCard = ({ title, description, link, tags, icon, badge, colorClass = "from-blue-500 to-cyan-500", details }: { title: string, description: string, link: string, tags: string[], icon: string, badge?: string, colorClass?: string, details?: ResourceDetails }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isFav, setIsFav] = useState(false);
     const [isInTasks, setIsInTasks] = useState(false);
     const [isInReminders, setIsInReminders] = useState(false);
+    const ribbonColor = badge ? (RIBBON_COLORS[badge] || RIBBON_COLORS['default']) : '';
+    
+    const handleCardClick = (e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('.details-section')) return;
+        window.open(link, '_blank', 'noopener,noreferrer');
+    };
 
     useEffect(() => {
         setIsFav(isFavorited(link));
@@ -81,71 +104,68 @@ const ResourceCard = ({ title, description, link, tags, icon, badge, colorClass 
     };
 
     return (
-        <div className="group relative flex flex-col bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 rounded-3xl border-2 border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:border-slate-200 dark:hover:border-slate-600 hover:-translate-y-2 transition-all duration-500 h-full overflow-hidden">
+        <div 
+            onClick={handleCardClick}
+            className="group relative flex flex-col bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 rounded-3xl border-2 border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:border-slate-200 dark:hover:border-slate-600 hover:-translate-y-2 transition-all duration-500 h-full overflow-hidden cursor-pointer"
+        >
             <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${colorClass}`}></div>
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClass} opacity-5 dark:opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-15 dark:group-hover:opacity-25 transition-opacity duration-500`}></div>
             
-            <div className="p-7 pb-3 flex-1 relative z-10">
+            {badge && (
+                <div className={`absolute bottom-0 left-0 right-0 py-2 px-4 bg-gradient-to-r ${ribbonColor} text-white text-center z-20`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{badge}</span>
+                </div>
+            )}
+            
+            <div className={`p-7 pb-3 flex-1 relative z-10 ${badge ? 'pb-14' : ''}`}>
                 <div className="flex justify-between items-start mb-6">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${colorClass} bg-opacity-10 flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 border border-white/50`}>
                         {icon}
                     </div>
-                    <div className="flex items-center gap-2">
-                        {badge && (
-                            <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
-                                badge.includes('High') ? 'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' : 
-                                badge.includes('Daily') || badge.includes('Fast') ? 'bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' :
-                                badge.includes('Vetted') || badge.includes('Elite') || badge.includes('Med') ? 'bg-purple-50 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' :
-                                'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'
-                            }`}>
-                                {badge}
-                            </span>
-                        )}
-                        <div className="flex gap-1">
-                            <button 
-                                onClick={handleFavorite}
-                                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all z-20 ${
-                                    isFav 
-                                        ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 border-2 border-pink-300 dark:border-pink-700' 
-                                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:text-pink-500 hover:border-pink-200 dark:hover:border-pink-800'
-                                }`}
-                                title={isFav ? 'Remove from favorites' : 'Add to favorites'}
-                            >
-                                {isFav ? '❤️' : '🤍'}
-                            </button>
-                            <button
-                                onClick={handleToggleTask}
-                                className={`w-9 h-9 rounded-lg border flex items-center justify-center text-lg transition-all ${
-                                    isInTasks 
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700' 
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800'
-                                }`}
-                                title={isInTasks ? 'Remove from tasks' : 'Add to tasks'}
-                            >
-                                ✅
-                            </button>
-                            <button
-                                onClick={handleToggleReminder}
-                                className={`w-9 h-9 rounded-lg border flex items-center justify-center text-lg transition-all ${
-                                    isInReminders 
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' 
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800'
-                                }`}
-                                title={isInReminders ? 'Remove from reminders' : 'Add to reminders'}
-                            >
-                                ⏰
-                            </button>
-                        </div>
+                    <div className="flex gap-1">
+                        <button 
+                            onClick={handleFavorite}
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all z-20 ${
+                                isFav 
+                                    ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 border-2 border-pink-300 dark:border-pink-700' 
+                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:text-pink-500 hover:border-pink-200 dark:hover:border-pink-800'
+                            }`}
+                            title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                            {isFav ? '❤️' : '🤍'}
+                        </button>
+                        <button
+                            onClick={handleToggleTask}
+                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-lg transition-all ${
+                                isInTasks 
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800'
+                            }`}
+                            title={isInTasks ? 'Remove from tasks' : 'Add to tasks'}
+                        >
+                            ✅
+                        </button>
+                        <button
+                            onClick={handleToggleReminder}
+                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-lg transition-all ${
+                                isInReminders 
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 opacity-40 hover:opacity-60 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800'
+                            }`}
+                            title={isInReminders ? 'Remove from reminders' : 'Add to reminders'}
+                        >
+                            ⏰
+                        </button>
                     </div>
                 </div>
 
-                <a href={link} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                <div className="cursor-pointer">
                     <h3 className="text-xl font-black text-slate-800 dark:text-white mb-3 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors flex items-center gap-2">
                         {title}
                         <span className="opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-500 text-lg font-bold">↗</span>
                     </h3>
                     <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 font-medium">{description}</p>
-                </a>
+                </div>
                 
                 {details?.bestFit && (
                    <div className="mb-5 p-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-700 dark:to-slate-800 rounded-2xl border border-slate-100 dark:border-slate-600 group-hover:from-brand-50/50 dark:group-hover:from-brand-900/20 group-hover:to-white dark:group-hover:to-slate-800 transition-colors shadow-inner">
@@ -164,9 +184,9 @@ const ResourceCard = ({ title, description, link, tags, icon, badge, colorClass 
             </div>
 
             {details && (
-                <div className="border-t-2 border-slate-100 dark:border-slate-700">
+                <div className="details-section border-t-2 border-slate-100 dark:border-slate-700">
                     <button 
-                        onClick={() => setIsOpen(!isOpen)}
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
                         className="w-full px-7 py-4 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-gradient-to-r hover:from-brand-50/50 dark:hover:from-brand-900/30 hover:to-transparent transition-all flex items-center justify-between"
                     >
                         <span>{isOpen ? 'Hide Insights' : 'View Details'}</span>

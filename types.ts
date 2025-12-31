@@ -315,7 +315,7 @@ export interface FavoriteResource {
   id: string;
   title: string;
   link: string;
-  category: 'money' | 'monetization' | 'unemployment';
+  category: 'money' | 'monetization' | 'unemployment' | 'assistance';
   description: string;
   date: string;
 }
