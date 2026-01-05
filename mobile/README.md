@@ -47,3 +47,4 @@ The mobile menu is optimized for touch interaction:
 - Icons and labels for each section
 - Grouped by functionality
 
+
