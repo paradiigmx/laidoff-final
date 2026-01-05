@@ -97,13 +97,19 @@ export const CoachView: React.FC<CoachViewProps> = ({ resumeData, onNavigate }) 
       // Load voices (they may not be available immediately)
       const loadVoices = () => {
         if (synthRef.current) {
-          synthRef.current.getVoices(); // Trigger voice loading
+          const voices = synthRef.current.getVoices();
+          // Log available voices for debugging
+          console.log('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang, default: v.default })));
         }
       };
+      // Try loading immediately
       loadVoices();
+      // Also listen for when voices are loaded
       if (synthRef.current.onvoiceschanged !== undefined) {
         synthRef.current.onvoiceschanged = loadVoices;
       }
+      // Force load voices after a short delay
+      setTimeout(loadVoices, 100);
     }
     
     // Initialize speech recognition
@@ -163,22 +169,63 @@ export const CoachView: React.FC<CoachViewProps> = ({ resumeData, onNavigate }) 
     
     synthRef.current.cancel(); // Cancel any ongoing speech
     
-    // Get available voices and prefer a more natural one
-    const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find((v: SpeechSynthesisVoice) => 
-      v.name.includes('Samantha') || 
-      v.name.includes('Alex') || 
-      v.name.includes('Google') ||
-      v.name.includes('Microsoft') ||
-      v.lang.startsWith('en')
-    ) || voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('en'));
+    // Get available voices - ensure we have voices loaded
+    let voices = synthRef.current.getVoices();
+    if (voices.length === 0) {
+      // If no voices, wait a bit and try again
+      setTimeout(() => {
+        voices = synthRef.current?.getVoices() || [];
+        if (voices.length > 0) {
+          speakText(text);
+        }
+      }, 100);
+      return;
+    }
+    
+    // Try to find a young female voice with multiple strategies
+    let preferredVoice = voices.find((v: SpeechSynthesisVoice) => {
+      const name = v.name.toLowerCase();
+      return name.includes('samantha') || 
+             name.includes('karen') ||
+             name.includes('victoria') ||
+             name.includes('zira') ||
+             name.includes('susan') ||
+             name.includes('shelley') ||
+             name.includes('sara');
+    });
+    
+    // If not found, try Google female voices
+    if (!preferredVoice) {
+      preferredVoice = voices.find((v: SpeechSynthesisVoice) => {
+        const name = v.name.toLowerCase();
+        return (name.includes('google') && (name.includes('female') || name.includes('us english female') || name.includes('en-us'))) ||
+               (name.includes('microsoft') && (name.includes('zira') || name.includes('female')));
+      });
+    }
+    
+    // If still not found, try any female voice
+    if (!preferredVoice) {
+      preferredVoice = voices.find((v: SpeechSynthesisVoice) => {
+        const name = v.name.toLowerCase();
+        return (name.includes('female') || name.includes('woman') || name.includes('girl')) && v.lang.startsWith('en');
+      });
+    }
+    
+    // Last fallback: any English voice
+    if (!preferredVoice) {
+      preferredVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('en'));
+    }
     
     const utterance = new SpeechSynthesisUtterance(text);
     if (preferredVoice) {
       utterance.voice = preferredVoice;
+      console.log('Using voice:', preferredVoice.name);
+    } else {
+      console.log('No preferred voice found, using default');
     }
-    utterance.rate = 0.95; // Slightly slower for more natural speech
-    utterance.pitch = 1.1; // Slightly higher pitch for more natural sound
+    // More friendly, young female voice settings
+    utterance.rate = 1.05; // Slightly faster for more energetic, friendly tone
+    utterance.pitch = 1.35; // Higher pitch for a younger female voice (increased from 1.3)
     utterance.volume = 1.0;
     
     synthRef.current.speak(utterance);

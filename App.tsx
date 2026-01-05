@@ -16,6 +16,8 @@ import { SettingsView } from './components/SettingsView';
 import { Hub } from './components/Hub';
 import { FinancialAssessmentView } from './components/FinancialAssessmentView';
 import { DreamShiftAssessmentView } from './components/DreamShiftAssessmentView';
+import { SeveranceHub } from './components/SeveranceHub';
+import { SeveranceArticleView } from './components/SeveranceArticleView';
 import { AppView, FileData, ResumeRewriteResult, SavedResume, SavedFounderProject } from './types';
 
 function App() {
@@ -26,6 +28,7 @@ function App() {
   
   // State for loading saved items from profile
   const [founderProject, setFounderProject] = useState<SavedFounderProject | null>(null);
+  const [severanceArticleId, setSeveranceArticleId] = useState<string | null>(null);
 
   useEffect(() => {
     const isDark = localStorage.getItem('dreamshift_dark') === 'true';
@@ -194,6 +197,22 @@ function App() {
 
       case AppView.DREAMSHIFT_ASSESSMENT:
         return <DreamShiftAssessmentView onNavigate={setCurrentView} />;
+
+      case AppView.SEVERANCE_HUB:
+        return <SeveranceHub onNavigate={(view, articleId) => {
+          if (view === AppView.SEVERANCE_ARTICLE && articleId) {
+            setSeveranceArticleId(articleId);
+            setCurrentView(AppView.SEVERANCE_ARTICLE);
+          } else {
+            setCurrentView(view);
+          }
+        }} />;
+
+      case AppView.SEVERANCE_ARTICLE:
+        return <SeveranceArticleView 
+          articleId={severanceArticleId || ''} 
+          onBack={() => setCurrentView(AppView.SEVERANCE_HUB)} 
+        />;
 
       case AppView.SETTINGS:
         return <SettingsView darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />;

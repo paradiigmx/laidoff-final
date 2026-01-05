@@ -71,21 +71,31 @@ const COLOR_CLASSES: Record<string, { gradient: string }> = {
     teal: { gradient: 'from-teal-500 to-teal-600' },
 };
 
-const SectionHeader = ({ title, subtitle, icon }: { title: string, subtitle: string, icon: string }) => (
-    <div className="mb-12 scroll-mt-28 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 dark:border-slate-700 pb-8">
-        <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-3xl shadow-xl">
+const SectionHeader = ({ title, subtitle, icon, color = "blue" }: { title: string, subtitle: string, icon: string, color?: string }) => {
+    const colorClasses: Record<string, string> = {
+        blue: 'from-blue-500 to-indigo-600',
+        emerald: 'from-emerald-500 to-teal-600',
+        purple: 'from-purple-500 to-indigo-600',
+        orange: 'from-orange-500 to-amber-600',
+        red: 'from-red-500 to-rose-600',
+        teal: 'from-teal-500 to-cyan-600',
+    };
+    const gradient = colorClasses[color] || colorClasses.blue;
+    
+    return (
+        <div className="flex items-center gap-5 mb-8">
+            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-4xl shadow-lg`}>
                 {icon}
             </div>
             <div>
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">
                     {title}
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{subtitle}</p>
+                <p className="text-slate-600 dark:text-slate-400 text-base font-medium">{subtitle}</p>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const RIBBON_COLORS: Record<string, string> = {
     'Start Here': 'from-emerald-500 to-green-500',
@@ -162,12 +172,6 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
             <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${colorClass.gradient}`}></div>
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClass.gradient} opacity-5 dark:opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-15 dark:group-hover:opacity-25 transition-opacity duration-500`}></div>
             
-            {badge && (
-                <div className={`absolute bottom-0 left-0 right-0 py-2 px-4 bg-gradient-to-r ${ribbonColor} text-white text-center z-20`}>
-                    <span className="text-[10px] font-black uppercase tracking-widest">{badge}</span>
-                </div>
-            )}
-            
             <div className={`p-7 flex flex-col h-full relative z-10 ${badge ? 'pb-14' : ''}`}>
                 <div className="flex justify-between items-start mb-5">
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass.gradient} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 border border-white/50`}>
@@ -225,6 +229,122 @@ const ResourceCard = ({ title, desc, link, icon, color = "blue", badge }: any) =
                     </div>
                 </a>
             </div>
+            
+            {badge && (
+                <div className={`absolute bottom-0 left-0 right-0 py-2 px-4 bg-gradient-to-r ${ribbonColor} text-white text-center z-20`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{badge}</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Unemployment Calculator Content Component
+const UnemploymentCalculatorContent = ({ selectedState }: { selectedState: string }) => {
+    const [quarterlyEarnings, setQuarterlyEarnings] = useState('');
+    const [result, setResult] = useState<{ weeklyBenefit: number; maxWeekly: number; totalBenefits: number; weeks: number } | null>(null);
+
+    // State-specific max weekly benefits (2024 estimates)
+    const STATE_MAX_WEEKLY: Record<string, number> = {
+        "Alabama": 275, "Alaska": 370, "Arizona": 240, "Arkansas": 451, "California": 450,
+        "Colorado": 618, "Connecticut": 649, "Delaware": 400, "Florida": 275, "Georgia": 365,
+        "Hawaii": 648, "Idaho": 448, "Illinois": 484, "Indiana": 390, "Iowa": 481,
+        "Kansas": 488, "Kentucky": 552, "Louisiana": 247, "Maine": 445, "Maryland": 430,
+        "Massachusetts": 823, "Michigan": 362, "Minnesota": 629, "Mississippi": 235, "Missouri": 320,
+        "Montana": 552, "Nebraska": 440, "Nevada": 469, "New Hampshire": 427, "New Jersey": 804,
+        "New Mexico": 511, "New York": 504, "North Carolina": 350, "North Dakota": 618, "Ohio": 480,
+        "Oklahoma": 539, "Oregon": 648, "Pennsylvania": 572, "Rhode Island": 586, "South Carolina": 326,
+        "South Dakota": 428, "Tennessee": 275, "Texas": 549, "Utah": 580, "Vermont": 513,
+        "Virginia": 378, "Washington": 999, "West Virginia": 424, "Wisconsin": 370, "Wyoming": 508
+    };
+
+    const calculate = () => {
+        const earnings = parseFloat(quarterlyEarnings);
+        const maxWeekly = selectedState ? (STATE_MAX_WEEKLY[selectedState] || 400) : 400;
+
+        if (earnings && selectedState) {
+            // Simplified calculation: Most states use highest quarter earnings
+            // Typical formula: 1/26 of highest quarter earnings, capped at state maximum
+            let weeklyBenefit = Math.min(earnings / 26, maxWeekly);
+            
+            // Some states have minimums
+            const minWeekly = 50;
+            weeklyBenefit = Math.max(weeklyBenefit, minWeekly);
+
+            // Typical benefit duration: 26 weeks (varies by state)
+            const weeks = 26;
+            const totalBenefits = weeklyBenefit * weeks;
+
+            setResult({ weeklyBenefit, maxWeekly, totalBenefits, weeks });
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">
+                        Highest Quarter Earnings ($)
+                    </label>
+                    <input
+                        type="number"
+                        value={quarterlyEarnings}
+                        onChange={(e) => setQuarterlyEarnings(e.target.value)}
+                        placeholder="e.g., 15000"
+                        className="w-full p-4 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-bold"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        Enter your highest quarterly earnings from your base period (typically the highest 3-month period in the last 12-18 months)
+                    </p>
+                </div>
+                <div>
+                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">
+                        State Maximum Weekly Benefit
+                    </label>
+                    <div className="w-full p-4 rounded-xl border-2 border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-black text-lg">
+                        ${STATE_MAX_WEEKLY[selectedState]?.toLocaleString() || '400'}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        Maximum weekly benefit for {selectedState}
+                    </p>
+                </div>
+            </div>
+            <button
+                onClick={calculate}
+                disabled={!quarterlyEarnings}
+                className="w-full px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+                Calculate Benefits
+            </button>
+
+            {result && (
+                <div className="mt-6 p-6 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800">
+                    <h4 className="text-xl font-black text-slate-900 dark:text-white mb-4">Estimated Benefits</h4>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center pb-3 border-b border-emerald-200 dark:border-emerald-700">
+                            <span className="text-slate-700 dark:text-slate-300 font-bold">Weekly Benefit:</span>
+                            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                ${result.weeklyBenefit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center pb-3 border-b border-emerald-200 dark:border-emerald-700">
+                            <span className="text-slate-700 dark:text-slate-300 font-bold">Total Benefits ({result.weeks} weeks):</span>
+                            <span className="text-2xl font-black text-slate-900 dark:text-white">
+                                ${result.totalBenefits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-600 dark:text-slate-400 text-sm">Maximum Weekly (State Cap):</span>
+                            <span className="text-lg font-bold text-slate-700 dark:text-slate-300">
+                                ${result.maxWeekly.toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg text-xs text-slate-600 dark:text-slate-400">
+                        <strong>Note:</strong> This is an estimate. Actual benefits depend on your state's specific calculation method, base period earnings, and other factors. Contact your state unemployment office for exact amounts.
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -245,93 +365,100 @@ export const UnemploymentResources = () => {
                         Relief Access
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
-                        Layoff<br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-white" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Resources.</span>
+                        Unemployment<br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-white" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>resources.</span>
                     </h1>
                     <p className="text-lg text-slate-300 leading-relaxed font-medium max-w-xl">
-                        Navigate job loss with confidence. Tools for benefits, severance, 401k, and career development.
+                        Navigate job loss with confidence. Tools for benefits, severance, and career development.
                     </p>
                 </div>
             </div>
 
-            {/* State Finder */}
-            <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-700 shadow-xl">
-                <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-8 flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">🏛️</span> State Benefits Finder
-                </h3>
-                <div className="flex flex-col lg:flex-row gap-8 items-end">
-                    <div className="flex-1 w-full space-y-2">
-                        <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Select Your Working State</label>
-                        <select 
-                            value={selectedState} 
-                            onChange={e => setSelectedState(e.target.value)} 
-                            className="w-full p-5 rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none cursor-pointer text-xl font-black text-slate-800 dark:text-white transition-all appearance-none shadow-sm"
-                            style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.5em' }}
-                        >
-                            <option value="">-- Choose Your State --</option>
-                            {STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                    {selectedState && STATE_UNEMPLOYMENT_DATA[selectedState] && (
-                        <div className="flex gap-3 w-full lg:w-auto">
-                            <a href={STATE_UNEMPLOYMENT_DATA[selectedState].url} target="_blank" rel="noreferrer" className="flex-1 lg:flex-none px-10 py-5 bg-brand-600 text-white font-black rounded-2xl hover:bg-brand-700 transition-all text-center whitespace-nowrap shadow-lg shadow-brand-500/20 active:scale-95">File Claim Now</a>
-                            <a href={`tel:${STATE_UNEMPLOYMENT_DATA[selectedState].phone}`} className="flex-1 lg:flex-none px-10 py-5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-black rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all text-center active:scale-95 flex items-center justify-center gap-2">
-                                <span>📞</span> {STATE_UNEMPLOYMENT_DATA[selectedState].phone}
-                            </a>
+            {/* Main Content Container */}
+            <div className="mt-16 bg-white dark:bg-slate-800 rounded-3xl p-8 md:p-12 border border-slate-200 dark:border-slate-700 shadow-xl">
+                {/* State Benefits Finder & Calculator */}
+                <section>
+                    <div className="flex items-center gap-5 mb-8">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-4xl shadow-lg">
+                            🏛️
                         </div>
-                    )}
-                </div>
-                {selectedState && (
-                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-2xl text-xs font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                        <span>💡</span> Pro-tip: Keep a log of every job you apply to. Most states require this for weekly certifications.
+                        <div>
+                            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">
+                                State Benefits Finder & Calculator
+                            </h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-base font-medium">Find your state's unemployment office and estimate your benefits</p>
+                        </div>
                     </div>
-                )}
-            </section>
+                    
+                    <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-700 dark:via-slate-700 dark:to-slate-800 rounded-2xl p-6 md:p-8 border-2 border-blue-200 dark:border-blue-800 shadow-lg mb-8">
+                        {/* State Finder Section */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-md mb-6">
+                            <div className="flex flex-col lg:flex-row gap-6 items-end mb-6">
+                                <div className="flex-1 w-full space-y-2">
+                                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2">Select Your Working State</label>
+                                    <select 
+                                        value={selectedState} 
+                                        onChange={e => setSelectedState(e.target.value)} 
+                                        className="w-full p-5 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer text-lg font-bold text-slate-800 dark:text-white transition-all appearance-none shadow-sm hover:border-blue-300 dark:hover:border-blue-600"
+                                        style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.25rem center', backgroundSize: '1.5em' }}
+                                    >
+                                        <option value="">-- Choose Your State --</option>
+                                        {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                {selectedState && STATE_UNEMPLOYMENT_DATA[selectedState] && (
+                                    <div className="flex gap-3 w-full lg:w-auto">
+                                        <a href={STATE_UNEMPLOYMENT_DATA[selectedState].url} target="_blank" rel="noreferrer" className="flex-1 lg:flex-none px-8 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-center whitespace-nowrap shadow-lg shadow-blue-500/30 active:scale-95 flex items-center justify-center gap-2">
+                                            <span>📝</span> File Claim Now
+                                        </a>
+                                        <a href={`tel:${STATE_UNEMPLOYMENT_DATA[selectedState].phone}`} className="flex-1 lg:flex-none px-8 py-5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all text-center active:scale-95 flex items-center justify-center gap-2">
+                                            <span>📞</span> {STATE_UNEMPLOYMENT_DATA[selectedState].phone}
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                            {selectedState && (
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm font-medium text-blue-800 dark:text-blue-200 flex items-start gap-3">
+                                    <span className="text-xl mt-0.5">💡</span>
+                                    <div>
+                                        <strong className="font-black">Pro-tip:</strong> Keep a detailed log of every job you apply to. Most states require this for weekly certifications. Include company name, position, date applied, and contact information.
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-            <div className="space-y-24">
-                {/* Severance Negotiation */}
-                <section>
-                    <SectionHeader icon="💰" title="Severance Negotiation" subtitle="Maximize your exit package and understand your rights." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <ResourceCard icon="📝" title="Severance Pay Guide" desc="Comprehensive guide on severance packages, what to expect, and how to maximize your payout." link="https://www.investopedia.com/articles/personal-finance/112015/severance-pay-what-it-and-how-it-works.asp" color="emerald" badge="Start Here" />
-                        <ResourceCard icon="⚖️" title="Release Agreement Tips" desc="Understand what you're signing. Key clauses to negotiate in your separation agreement." link="https://www.nolo.com/legal-encyclopedia/severance-pay-do-you-have-right-it.html" color="blue" />
-                        <ResourceCard icon="📄" title="ERISA Rights" desc="Understand your rights under ERISA for employer benefits like severance and health coverage continuation." link="https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/resource-center/faqs/benefits" color="indigo" />
-                        <ResourceCard icon="🤝" title="Negotiation Strategies" desc="Expert tactics for negotiating better severance terms including extended benefits and outplacement services." link="https://hbr.org/2022/08/7-things-to-consider-before-you-sign-a-severance-agreement" color="purple" />
-                        <ResourceCard icon="📊" title="Severance Calculator" desc="Estimate typical severance based on your tenure, role, and industry standards." link="https://www.salary.com/research/severance-pay-calculator" color="teal" />
-                        <ResourceCard icon="📋" title="Exit Checklist" desc="Complete checklist of what to request and review before your last day at work." link="https://www.investopedia.com/articles/personal-finance/112015/severance-pay-what-it-and-how-it-works.asp" color="orange" />
+                        {/* Calculator Section */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-md">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-xl shadow-lg">
+                                    📊
+                                </div>
+                                <div>
+                                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">Benefits Calculator</h4>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Estimate your weekly and total unemployment benefits</p>
+                                </div>
+                            </div>
+                            {!selectedState ? (
+                                <div className="text-center py-8">
+                                    <p className="text-slate-600 dark:text-slate-400 font-medium">
+                                        Please select your state above to calculate your unemployment benefits.
+                                    </p>
+                                </div>
+                            ) : (
+                                <UnemploymentCalculatorContent selectedState={selectedState} />
+                            )}
+                        </div>
                     </div>
                 </section>
 
-                {/* 401k & Retirement */}
-                <section>
-                    <SectionHeader icon="🏦" title="401k & Retirement" subtitle="Protect your retirement funds during job transitions." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <ResourceCard icon="💼" title="401k Rollover Guide" desc="Step-by-step guide to rolling over your 401k to an IRA or new employer plan without penalties." link="https://www.investopedia.com/articles/personal-finance/072215/401k-rollover-rules.asp" color="blue" badge="Essential" />
-                        <ResourceCard icon="📈" title="IRA Options" desc="Compare Traditional vs Roth IRA options when rolling over your 401k funds." link="https://www.fidelity.com/viewpoints/retirement/rollover-ira" color="emerald" />
-                        <ResourceCard icon="🚫" title="Avoid 401k Mistakes" desc="Common 401k mistakes during job loss and how to avoid early withdrawal penalties." link="https://www.nerdwallet.com/article/investing/401k-rollover" color="red" />
-                        <ResourceCard icon="⏰" title="Rollover Timeline" desc="Understand the 60-day rollover rule and how to avoid accidental distributions." link="https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions" color="yellow" />
-                        <ResourceCard icon="💰" title="Vesting Schedule" desc="Understand which employer contributions you're entitled to keep based on your vesting period." link="https://www.investopedia.com/terms/v/vesting.asp" color="indigo" />
-                        <ResourceCard icon="📊" title="Retirement Calculators" desc="Free tools to recalculate your retirement timeline based on your new situation." link="https://www.bankrate.com/retirement/calculators/retirement-plan-calculator/" color="teal" />
-                    </div>
-                </section>
+                {/* Divider */}
+                <div className="border-t-2 border-slate-200 dark:border-slate-700 my-12"></div>
 
-                {/* Rights & Reporting */}
-                <section>
-                    <SectionHeader icon="⚖️" title="Rights & Reporting" subtitle="Know your legal protections and how to file complaints." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <ResourceCard icon="📜" title="WARN Act Rights" desc="Federal law requiring 60 days notice for mass layoffs at large companies. Check if you were entitled to notice." link="https://www.dol.gov/agencies/eta/layoffs/warn" color="red" badge="Legal Guard" />
-                        <ResourceCard icon="⚖️" title="EEOC Discrimination" desc="The U.S. Equal Employment Opportunity Commission. Protect yourself if you believe your termination was illegal." link="https://www.eeoc.gov/filing-charge-discrimination" color="slate" />
-                        <ResourceCard icon="💼" title="Severance Negotiation" desc="An expert guide on how to negotiate your severance package and understand release agreements." link="https://www.investopedia.com/articles/personal-finance/112015/severance-pay-what-it-and-how-it-works.asp" color="emerald" />
-                        <ResourceCard icon="⚖️" title="NLRB Protections" desc="Know your rights to engage in 'protected concerted activity' and discuss working conditions with colleagues." link="https://www.nlrb.gov/about-nlrb/rights-we-protect" color="blue" />
-                        <ResourceCard icon="🏛️" title="State Labor Offices" desc="Every state has a Department of Labor that handles wage disputes and local worker protections." link="https://www.dol.gov/agencies/whd/state/contacts" color="yellow" />
-                        <ResourceCard icon="📚" title="Legal Aid Search" desc="Find free or low-cost legal help in your community for unemployment appeals or contract disputes." link="https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help" color="purple" />
-                    </div>
-                </section>
-
+                <div className="space-y-12">
                 {/* Career Development */}
                 <section>
-                    <SectionHeader icon="📈" title="Career Development" subtitle="Build new skills and credentials for your next role." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <SectionHeader icon="📈" title="Career Development" subtitle="Build new skills and credentials for your next role." color="blue" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         <ResourceCard icon="🎓" title="Coursera" desc="Free courses from top universities. Many offer financial aid for certificates during unemployment." link="https://www.coursera.org/" color="blue" badge="Free Courses" />
                         <ResourceCard icon="💻" title="LinkedIn Learning" desc="1 month free trial. Business, tech, and creative skills with certificates you can add to your profile." link="https://www.linkedin.com/learning/" color="indigo" />
                         <ResourceCard icon="📚" title="edX" desc="Free online courses from Harvard, MIT, and more. Audit most courses at no cost." link="https://www.edx.org/" color="red" />
@@ -341,10 +468,13 @@ export const UnemploymentResources = () => {
                     </div>
                 </section>
 
+                {/* Divider */}
+                <div className="border-t-2 border-slate-200 dark:border-slate-700 my-12"></div>
+
                 {/* Job Search Tools */}
                 <section>
-                    <SectionHeader icon="🔍" title="Job Search Tools" subtitle="Find your next opportunity with top job platforms." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <SectionHeader icon="🔍" title="Job Search Tools" subtitle="Find your next opportunity with top job platforms." color="indigo" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         <ResourceCard icon="💼" title="LinkedIn Jobs" desc="The world's largest professional network. Set up job alerts and let recruiters find you." link="https://www.linkedin.com/jobs/" color="blue" badge="Essential" />
                         <ResourceCard icon="🔍" title="Indeed" desc="The largest job search engine. Search millions of jobs and set up instant alerts." link="https://www.indeed.com/" color="indigo" />
                         <ResourceCard icon="🏢" title="Glassdoor" desc="Job listings with salary data and company reviews. Know what you're getting into." link="https://www.glassdoor.com/" color="emerald" />
@@ -354,10 +484,13 @@ export const UnemploymentResources = () => {
                     </div>
                 </section>
 
+                {/* Divider */}
+                <div className="border-t-2 border-slate-200 dark:border-slate-700 my-12"></div>
+
                 {/* Community Support */}
                 <section>
-                    <SectionHeader icon="🤗" title="Community Support" subtitle="Connect with others navigating similar challenges." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <SectionHeader icon="🤗" title="Community Support" subtitle="Connect with others navigating similar challenges." color="orange" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         <ResourceCard icon="👥" title="Layoffs.fyi" desc="Track tech layoffs in real-time. Community support and job resources for those affected." link="https://layoffs.fyi/" color="red" badge="Tech Support" />
                         <ResourceCard icon="💬" title="r/layoffs" desc="Reddit community for layoff support. Share experiences and get advice from others going through it." link="https://www.reddit.com/r/layoffs/" color="orange" />
                         <ResourceCard icon="🤝" title="Meetup" desc="Find local networking events and professional groups. Build connections in your field." link="https://www.meetup.com/" color="red" />
@@ -370,10 +503,13 @@ export const UnemploymentResources = () => {
                     </div>
                 </section>
 
+                {/* Divider */}
+                <div className="border-t-2 border-slate-200 dark:border-slate-700 my-12"></div>
+
                 {/* Resume & Interview */}
                 <section>
-                    <SectionHeader icon="📝" title="Resume & Interview Prep" subtitle="Polish your materials and ace your interviews." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <SectionHeader icon="📝" title="Resume & Interview Prep" subtitle="Polish your materials and ace your interviews." color="purple" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         <ResourceCard icon="📄" title="Resume Worded" desc="AI-powered resume and LinkedIn review. Get instant feedback to improve your application materials." link="https://resumeworded.com/" color="blue" badge="AI-Powered" />
                         <ResourceCard icon="🎯" title="Jobscan" desc="Optimize your resume for ATS systems. Match your resume to job descriptions." link="https://www.jobscan.co/" color="emerald" />
                         <ResourceCard icon="🎤" title="Pramp" desc="Free mock interviews with peers. Practice coding, product, and behavioral interviews." link="https://www.pramp.com/" color="indigo" />
@@ -383,10 +519,13 @@ export const UnemploymentResources = () => {
                     </div>
                 </section>
 
+                {/* Divider */}
+                <div className="border-t-2 border-slate-200 dark:border-slate-700 my-12"></div>
+
                 {/* Financial Planning */}
                 <section>
-                    <SectionHeader icon="💰" title="Financial Planning" subtitle="Manage your finances during the transition." />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <SectionHeader icon="💰" title="Financial Planning" subtitle="Manage your finances during the transition." color="emerald" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <ResourceCard icon="📊" title="Mint" desc="Free budgeting app to track spending, create budgets, and monitor your financial health." link="https://mint.intuit.com/" color="emerald" badge="Free" />
                         <ResourceCard icon="💳" title="Credit Karma" desc="Free credit monitoring and personalized financial recommendations." link="https://www.creditkarma.com/" color="blue" />
                         <ResourceCard icon="📈" title="YNAB" desc="You Need A Budget - proactive budgeting method perfect for uncertain income situations." link="https://www.ynab.com/" color="teal" />
@@ -395,6 +534,7 @@ export const UnemploymentResources = () => {
                         <ResourceCard icon="💡" title="Bankrate Calculators" desc="Financial calculators for budgeting, debt payoff, and emergency fund planning." link="https://www.bankrate.com/calculators/" color="orange" />
                     </div>
                 </section>
+                </div>
             </div>
         </div>
     );

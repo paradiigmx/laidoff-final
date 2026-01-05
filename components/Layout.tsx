@@ -110,12 +110,13 @@ const ProfileWidget: React.FC<{ onEditProfile: () => void }> = ({ onEditProfile 
 export const Layout: React.FC<LayoutProps> = ({ currentView, darkMode, onToggleDarkMode, onChangeView, children, hasResume }) => {
   const navItems = [
     { id: AppView.HOME, label: 'Hub', icon: '🏠' },
-    { id: AppView.RESUME, label: 'Resume Lab', icon: '✨' },
+    { id: AppView.SEVERANCE_HUB, label: 'LaidOff', icon: '💰' },
+    { id: AppView.UNEMPLOYMENT, label: 'Unemployment', icon: '🏛️' },
     { id: AppView.JOBS, label: 'Job Hunter', icon: '🔍' },
     { id: AppView.MONEY, label: 'Gigs', icon: '💸' },
     { id: AppView.MONETIZATION, label: 'Monetization', icon: '📈' },
-    { id: AppView.UNEMPLOYMENT, label: 'Unemployment', icon: '🏛️' },
     { id: AppView.ASSISTANCE, label: 'Assistance', icon: '🤝' },
+    { id: AppView.RESUME, label: 'Resume Lab', icon: '✨' },
     { id: AppView.COACH, label: 'Coaching', icon: '🧠' },
     { id: AppView.FOUNDER, label: 'Founder', icon: '🚀' },
     { id: AppView.SETTINGS, label: 'Settings', icon: '⚙️' },
@@ -125,11 +126,11 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, darkMode, onToggleD
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 dark:bg-slate-900 text-white flex-shrink-0 flex flex-col shadow-xl z-20">
-        <div className="p-6 border-b border-slate-700">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-teal-300 bg-clip-text text-transparent">
-            DreamShift
+        <div className="p-6 border-b border-orange-600 bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600">
+          <h1 className="text-2xl font-bold text-white">
+            Rattle
           </h1>
-          <p className="text-xs text-slate-400 mt-1">Powered by Gemini 2.5</p>
+          <p className="text-xs text-orange-100 mt-1">Powered by Public Bar Association</p>
         </div>
 
         <div className="p-4 border-b border-slate-700">
@@ -143,26 +144,20 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, darkMode, onToggleD
               onClick={() => onChangeView(item.id)}
               title={`Switch to ${item.label}`}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                currentView === item.id
-                  ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/50'
+                currentView === item.id || (item.id === AppView.SEVERANCE_HUB && currentView === AppView.SEVERANCE_ARTICLE)
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/50'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
               <span className="font-medium">{item.label}</span>
-              {item.id === AppView.FOUNDER && (
-                  <span className="ml-auto text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 px-1.5 py-0.5 rounded">NEW</span>
-              )}
-              {item.id === AppView.COACH && (
-                  <span className="ml-auto text-[10px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded">HOT</span>
-              )}
             </button>
           ))}
         </nav>
 
         <div className="p-4 border-t border-slate-700 bg-slate-900/50">
           <div className="text-xs text-slate-500 text-center">
-            &copy; {new Date().getFullYear()} DreamShift
+            &copy; {new Date().getFullYear()} Rattle
           </div>
         </div>
       </aside>
@@ -172,8 +167,8 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, darkMode, onToggleD
          <div className="absolute top-0 left-0 w-full h-full opacity-5 dark:opacity-10 pointer-events-none bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]" />
         
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-8 justify-between shadow-sm z-10 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+        <header className="h-16 bg-gradient-to-r from-orange-500 to-orange-600 border-b border-orange-600 flex items-center px-8 justify-between shadow-sm z-10 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-white">
             {currentView === AppView.HOME && "Your Personal Hub"}
             {currentView === AppView.RESUME && "AI Resume Enhancer"}
             {currentView === AppView.JOBS && "Smart Job Search"}

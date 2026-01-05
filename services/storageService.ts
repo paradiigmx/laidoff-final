@@ -541,7 +541,157 @@ export const updateBusinessProfile = (id: string, updates: Partial<BusinessProfi
     if (index >= 0) {
         profiles[index] = { ...profiles[index], ...updates, updatedAt: new Date().toISOString() };
         localStorage.setItem(STORAGE_KEYS.BUSINESS_PROFILES, JSON.stringify(profiles));
+        return profiles[index];
     }
+    return null;
+};
+
+export const saveRoadmapToProfile = (profileId: string, assessment: any, result: any) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const roadmap = {
+        id: `rm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        assessment,
+        result,
+        createdAt: new Date().toISOString()
+    };
+    
+    const savedRoadmaps = profile.savedRoadmaps || [];
+    savedRoadmaps.push(roadmap);
+    
+    return updateBusinessProfile(profileId, { savedRoadmaps });
+};
+
+export const savePitchToProfile = (profileId: string, assessment: any, result: any) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const pitch = {
+        id: `pt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        assessment,
+        result,
+        createdAt: new Date().toISOString()
+    };
+    
+    const savedPitches = profile.savedPitches || [];
+    savedPitches.push(pitch);
+    
+    return updateBusinessProfile(profileId, { savedPitches });
+};
+
+export const saveRevenueStrategyToProfile = (profileId: string, assessment: any, result: any) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const strategy = {
+        id: `rs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        assessment,
+        result,
+        createdAt: new Date().toISOString()
+    };
+    
+    const savedRevenueStrategies = profile.savedRevenueStrategies || [];
+    savedRevenueStrategies.push(strategy);
+    
+    return updateBusinessProfile(profileId, { savedRevenueStrategies });
+};
+
+export const saveLogoToProfile = (profileId: string, logoUrl: string, style: string) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const logo = {
+        id: `lg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        logoUrl,
+        style,
+        createdAt: new Date().toISOString()
+    };
+    
+    const savedLogos = profile.savedLogos || [];
+    savedLogos.push(logo);
+    
+    return updateBusinessProfile(profileId, { savedLogos });
+};
+
+export const saveNoteToProfile = (profileId: string, title: string, content: string) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const note = {
+        id: `nt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title,
+        content,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    const notes = profile.notes || [];
+    notes.push(note);
+    
+    return updateBusinessProfile(profileId, { notes });
+};
+
+export const updateNoteInProfile = (profileId: string, noteId: string, updates: { title?: string; content?: string }) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const notes = profile.notes || [];
+    const index = notes.findIndex(n => n.id === noteId);
+    if (index >= 0) {
+        notes[index] = { ...notes[index], ...updates, updatedAt: new Date().toISOString() };
+        return updateBusinessProfile(profileId, { notes });
+    }
+    return null;
+};
+
+export const deleteNoteFromProfile = (profileId: string, noteId: string) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const notes = (profile.notes || []).filter(n => n.id !== noteId);
+    return updateBusinessProfile(profileId, { notes });
+};
+
+export const toggleFavoriteInvestor = (profileId: string, investorId: string) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const favorites = profile.favoriteInvestors || [];
+    const isFavorite = favorites.includes(investorId);
+    
+    if (isFavorite) {
+        const updated = favorites.filter(id => id !== investorId);
+        return updateBusinessProfile(profileId, { favoriteInvestors: updated });
+    } else {
+        return updateBusinessProfile(profileId, { favoriteInvestors: [...favorites, investorId] });
+    }
+};
+
+export const saveInvestorNote = (profileId: string, investorId: string, pros: string[], cons: string[], compatibility: number, notes: string) => {
+    const profile = getBusinessProfile(profileId);
+    if (!profile) return null;
+    
+    const investorNotes = profile.investorNotes || [];
+    const existingIndex = investorNotes.findIndex(n => n.investorId === investorId);
+    
+    const note = {
+        investorId,
+        pros,
+        cons,
+        compatibility,
+        notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    if (existingIndex >= 0) {
+        investorNotes[existingIndex] = { ...note, createdAt: investorNotes[existingIndex].createdAt };
+    } else {
+        investorNotes.push(note);
+    }
+    
+    return updateBusinessProfile(profileId, { investorNotes });
 };
 
 export const deleteBusinessProfile = (id: string) => {

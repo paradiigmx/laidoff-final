@@ -2,6 +2,34 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { JobSearchResult, ResumeRewriteResult, BusinessNameIdea, FounderProfile, FounderPlan, CoachMessage, StructuredResume, DreamShiftCard, DreamShiftPath } from "../types";
 
+export interface RoadmapDay {
+    day: number;
+    title: string;
+    tasks: Array<{
+        task: string;
+        description: string;
+        timeEstimate: string;
+        resources?: Array<{
+            title: string;
+            link: string;
+            category: string;
+        }>;
+    }>;
+}
+
+export interface RoadmapResult {
+    overview: string;
+    goal: string;
+    days: RoadmapDay[];
+    recommendedResources: Array<{
+        title: string;
+        link: string;
+        category: string;
+        description: string;
+        reason: string;
+    }>;
+}
+
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY || '';
 
 let ai: GoogleGenAI | null = null;
@@ -354,7 +382,7 @@ export const searchJobs = async (
 export const generateBusinessNames = async (profile: FounderProfile): Promise<BusinessNameIdea[]> => {
     try {
         const model = "gemini-2.5-flash";
-        const prompt = `Generate 10 brandable names. Profile: ${JSON.stringify(profile)}. Output strictly JSON array: [{"name": "", "domain": "", "meaning": "", "industryFit": "", "availabilityStatus": "available"}]`;
+        const prompt = `Generate 9 brandable names. For each name, provide 3-5 domain variations (e.g., .com, .io, .co, .net, .app). Profile: ${JSON.stringify(profile)}. Output strictly JSON array: [{"name": "", "domain": "", "domains": ["name.com", "name.io", "name.co"], "meaning": "", "industryFit": "", "availabilityStatus": "available"}]`;
         const response = await getAI().models.generateContent({
             model,
             contents: prompt,
@@ -362,7 +390,12 @@ export const generateBusinessNames = async (profile: FounderProfile): Promise<Bu
         });
         const cleanText = response.text.replace(/```json\n?|\n?```/g, "").trim();
         const match = cleanText.match(/\[[\s\S]*\]/);
-        return JSON.parse(match ? match[0] : cleanText);
+        const results = JSON.parse(match ? match[0] : cleanText);
+        // Ensure each result has a domains array, using domain as fallback
+        return results.map((item: any) => ({
+            ...item,
+            domains: item.domains || (item.domain ? [item.domain] : [])
+        }));
     } catch (error) { throw handleError(error, "generate business names"); }
 };
 
@@ -380,6 +413,414 @@ export const generateFounderPlan = async (name: string, domain: string, profile:
     } catch (error) { throw handleError(error, "generate your business plan"); }
 };
 
+export interface RoadmapDay {
+    day: number;
+    title: string;
+    tasks: Array<{
+        task: string;
+        description: string;
+        timeEstimate: string;
+        resources?: Array<{
+            title: string;
+            link: string;
+            category: string;
+        }>;
+    }>;
+}
+
+export interface RoadmapResult {
+    overview: string;
+    goal: string;
+    days: RoadmapDay[];
+    recommendedResources: Array<{
+        title: string;
+        link: string;
+        category: string;
+        description: string;
+        reason: string;
+    }>;
+}
+
+export const generateRoadmap = async (
+    businessProfile: any,
+    assessment: {
+        primaryGoal: string;
+        hoursPerDay: string;
+        comfortableTalkingToCustomers: string;
+        comfortableSellingDirectly: string;
+        whatWouldStopYou: string;
+    }
+): Promise<RoadmapResult> => {
+    try {
+        const model = "gemini-2.5-flash";
+        const businessContext = `
+Business Name: ${businessProfile.businessName}
+Business Type: ${businessProfile.businessType}
+Stage: ${businessProfile.stage}
+Target Customer: ${businessProfile.targetCustomer || 'Not specified'}
+Problem Being Solved: ${businessProfile.problemBeingSolved || 'Not specified'}
+Industry/Sector: ${businessProfile.targetCustomer || businessProfile.businessType}
+`;
+        
+        const prompt = `Create a realistic 7-day roadmap to help this business achieve: ${assessment.primaryGoal}
+
+${businessContext}
+
+Assessment:
+- Primary Goal: ${assessment.primaryGoal}
+- Hours Available Per Day: ${assessment.hoursPerDay}
+- Comfortable Talking to Customers: ${assessment.comfortableTalkingToCustomers}
+- Comfortable Selling Directly: ${assessment.comfortableSellingDirectly}
+- Potential Blocker: ${assessment.whatWouldStopYou}
+
+Based on the business type and industry, recommend relevant resources from these categories:
+- Monetization platforms (Etsy, Shopify, Gumroad, Stripe, etc.)
+- Marketing tools (social media platforms, email marketing, etc.)
+- Service platforms (Upwork, Fiverr, etc.) if applicable
+- E-commerce platforms if selling products
+- Content creation tools if relevant
+- Business tools (accounting, legal, etc.)
+- Industry-specific resources based on the business type
+
+For each day, provide:
+- Day number (1-7)
+- Day title (brief, action-oriented)
+- 2-4 specific tasks with descriptions
+- Time estimates for each task
+- Relevant resources for that day's tasks (link to actual platforms/tools)
+
+Also provide an overview paragraph and a list of 5-8 recommended resources that align with this business type/industry.
+
+Output JSON in this exact format:
+{
+  "overview": "1-2 paragraph overview of the roadmap",
+  "goal": "${assessment.primaryGoal}",
+  "days": [
+    {
+      "day": 1,
+      "title": "Day title",
+      "tasks": [
+        {
+          "task": "Task name",
+          "description": "Detailed description",
+          "timeEstimate": "e.g., 1-2 hours",
+          "resources": [
+            {
+              "title": "Resource name",
+              "link": "https://...",
+              "category": "Category"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "recommendedResources": [
+    {
+      "title": "Resource name",
+      "link": "https://...",
+      "category": "Category",
+      "description": "Brief description",
+      "reason": "Why this fits this business"
+    }
+  ]
+}`;
+
+        const response = await getAI().models.generateContent({
+            model,
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+        const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
+        return JSON.parse(cleanJson || "{}");
+    } catch (error) { 
+        throw handleError(error, "generate roadmap"); 
+    }
+};
+
+export interface PitchResult {
+    pitch: string;
+    keyPoints: string[];
+    callToAction: string;
+    tips: string[];
+    recommendedResources?: Array<{
+        title: string;
+        link: string;
+        category: string;
+        description: string;
+    }>;
+}
+
+export const generatePitch = async (
+    businessProfile: any,
+    assessment: {
+        pitchingTo: string;
+        pitchLength: string;
+        hardestToExplain: string;
+        speakingConfidence: string;
+    }
+): Promise<PitchResult> => {
+    try {
+        const model = "gemini-2.5-flash";
+        const businessContext = `
+Business Name: ${businessProfile.businessName}
+Business Type: ${businessProfile.businessType}
+Target Customer: ${businessProfile.targetCustomer || 'Not specified'}
+Problem Being Solved: ${businessProfile.problemBeingSolved || 'Not specified'}
+Value Proposition: ${businessProfile.pricingModel || 'Not specified'}
+`;
+        
+        const prompt = `Create a ${assessment.pitchLength} elevator pitch for this business.
+
+${businessContext}
+
+Assessment:
+- Pitching To: ${assessment.pitchingTo}
+- Pitch Length: ${assessment.pitchLength}
+- Hardest to Explain: ${assessment.hardestToExplain}
+- Speaking Confidence: ${assessment.speakingConfidence}
+
+The pitch should:
+- Be clear and compelling
+- Address the hardest-to-explain aspect clearly
+- Match the confidence level (if low confidence, use simpler language)
+- Include a strong call to action
+- Be appropriate for ${assessment.pitchingTo}
+
+Also recommend 3-5 resources that would help with pitching (pitch practice tools, presentation platforms, etc.).
+
+Output JSON in this exact format:
+{
+  "pitch": "The full pitch text",
+  "keyPoints": ["Key point 1", "Key point 2", "Key point 3"],
+  "callToAction": "Clear call to action",
+  "tips": ["Tip 1", "Tip 2", "Tip 3"],
+  "recommendedResources": [
+    {
+      "title": "Resource name",
+      "link": "https://...",
+      "category": "Category",
+      "description": "Brief description"
+    }
+  ]
+}`;
+
+        const response = await getAI().models.generateContent({
+            model,
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+        const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
+        return JSON.parse(cleanJson || "{}");
+    } catch (error) { 
+        throw handleError(error, "generate pitch"); 
+    }
+};
+
+export interface RevenueStrategyResult {
+    overview: string;
+    primaryStrategies: Array<{
+        strategy: string;
+        description: string;
+        timeToRevenue: string;
+        effortLevel: string;
+        potentialRevenue: string;
+        resources?: Array<{
+            title: string;
+            link: string;
+            category: string;
+        }>;
+    }>;
+    recommendedResources: Array<{
+        title: string;
+        link: string;
+        category: string;
+        description: string;
+        reason: string;
+    }>;
+    nextSteps: string[];
+}
+
+export const generateRevenueStrategy = async (
+    businessProfile: any,
+    assessment: {
+        incomeTimeline: string;
+        willingToSellTime: string;
+        willingToBuildOnceSellMany: string;
+        pricingComfort: string;
+        salesTolerance: string;
+        existingProof: string;
+    }
+): Promise<RevenueStrategyResult> => {
+    try {
+        const model = "gemini-2.5-flash";
+        const businessContext = `
+Business Name: ${businessProfile.businessName}
+Business Type: ${businessProfile.businessType}
+Stage: ${businessProfile.stage}
+Target Customer: ${businessProfile.targetCustomer || 'Not specified'}
+Problem Being Solved: ${businessProfile.problemBeingSolved || 'Not specified'}
+Pricing Model: ${businessProfile.pricingModel || 'Not specified'}
+Existing Assets: ${businessProfile.existingAssets?.join(', ') || 'None'}
+`;
+        
+        const prompt = `Create a revenue strategy for this business.
+
+${businessContext}
+
+Assessment:
+- Income Timeline: ${assessment.incomeTimeline}
+- Willing to Sell Time: ${assessment.willingToSellTime}
+- Willing to Build Once, Sell Many: ${assessment.willingToBuildOnceSellMany}
+- Pricing Comfort: ${assessment.pricingComfort}
+- Sales Tolerance: ${assessment.salesTolerance}
+- Existing Proof: ${assessment.existingProof}
+
+Based on the business type and assessment, recommend 3-5 revenue strategies that:
+- Match the income timeline
+- Align with willingness to sell time vs build products
+- Fit the pricing comfort level
+- Work with sales tolerance
+- Leverage existing proof/assets
+
+For each strategy, provide:
+- Strategy name
+- Description
+- Time to first revenue
+- Effort level
+- Potential revenue range
+- Relevant resources (platforms, tools, etc.)
+
+Also recommend 5-8 general resources that align with this business type/industry.
+
+Output JSON in this exact format:
+{
+  "overview": "1-2 paragraph overview",
+  "primaryStrategies": [
+    {
+      "strategy": "Strategy name",
+      "description": "Detailed description",
+      "timeToRevenue": "e.g., 1-2 weeks",
+      "effortLevel": "low/medium/high",
+      "potentialRevenue": "e.g., $500-$2000/month",
+      "resources": [
+        {
+          "title": "Resource name",
+          "link": "https://...",
+          "category": "Category"
+        }
+      ]
+    }
+  ],
+  "recommendedResources": [
+    {
+      "title": "Resource name",
+      "link": "https://...",
+      "category": "Category",
+      "description": "Brief description",
+      "reason": "Why this fits"
+    }
+  ],
+  "nextSteps": ["Step 1", "Step 2", "Step 3"]
+}`;
+
+        const response = await getAI().models.generateContent({
+            model,
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+        const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
+        return JSON.parse(cleanJson || "{}");
+    } catch (error) { 
+        throw handleError(error, "generate revenue strategy"); 
+    }
+};
+
+export interface AngelInvestor {
+    name: string;
+    firm?: string;
+    focus: string[];
+    stage: string[];
+    location?: string;
+    website?: string;
+    contact?: string;
+    description: string;
+    checkSize?: string;
+}
+
+export const searchAngelInvestors = async (
+    businessProfile: any
+): Promise<AngelInvestor[]> => {
+    try {
+        const model = "gemini-2.5-flash";
+        const businessContext = `
+Business Name: ${businessProfile.businessName}
+Business Type: ${businessProfile.businessType}
+Stage: ${businessProfile.stage}
+Industry/Sector: ${businessProfile.targetCustomer || businessProfile.businessType}
+Problem Being Solved: ${businessProfile.problemBeingSolved || 'Not specified'}
+`;
+        
+        const prompt = `Find 10-15 angel investors or early-stage VC firms that would be a good fit for this business.
+
+${businessContext}
+
+Search for:
+- Angel investors who invest in this industry/sector
+- Early-stage VCs that match the business stage
+- Investors who focus on this business type
+- Location-appropriate investors if relevant
+
+For each investor, provide:
+- Name (and firm name if applicable)
+- Focus areas/industries
+- Investment stage (pre-seed, seed, Series A, etc.)
+- Location (if known)
+- Website or LinkedIn
+- Contact method (if available)
+- Brief description
+- Typical check size (if known)
+
+Output JSON array in this exact format:
+[
+  {
+    "name": "Investor name",
+    "firm": "Firm name (if applicable)",
+    "focus": ["Industry 1", "Industry 2"],
+    "stage": ["Seed", "Series A"],
+    "location": "City, State or Remote",
+    "website": "https://...",
+    "contact": "email or contact method",
+    "description": "Brief description",
+    "checkSize": "e.g., $25K-$100K"
+  }
+]`;
+
+        const response = await getAI().models.generateContent({
+            model,
+            contents: prompt,
+            config: { tools: [{ googleSearch: {} }] }
+        });
+        const text = response.text || "";
+        const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
+        // Try to extract JSON array from the response
+        const match = cleanJson.match(/\[[\s\S]*\]/);
+        if (match) {
+            return JSON.parse(match[0]);
+        }
+        // If no array found, try parsing the whole response
+        try {
+            return JSON.parse(cleanJson);
+        } catch (e) {
+            // If JSON parsing fails, return empty array
+            console.error("Failed to parse investor search response:", e);
+            return [];
+        }
+    } catch (error) { 
+        throw handleError(error, "search angel investors"); 
+    }
+};
+
 export const generateLogo = async (name: string, tone: string, industry: string): Promise<string> => {
     try {
         const model = "gemini-2.5-flash"; 
@@ -395,39 +836,82 @@ export const generateLogo = async (name: string, tone: string, industry: string)
 
 export const generateLogoOptions = async (name: string, industry: string, style: string): Promise<string[]> => {
     try {
-        const variations = [`Minimal ${style}`, `Abstract ${style}`, `Typographic ${style}`, `Modern ${style}`];
-        const results = await Promise.all(variations.map(async (v) => {
-            try {
-                const response = await getAI().models.generateImages({
-                    model: "imagen-3.0-generate-002",
-                    prompt: `Professional business logo for "${name}" company in the ${industry} industry. Style: ${v}. Clean, simple, suitable for business cards and websites. White or transparent background. No text unless it's the company name.`,
-                    config: {
-                        numberOfImages: 1,
-                    }
-                });
-                
-                if (!response.generatedImages || response.generatedImages.length === 0) {
-                    console.error('No images generated');
-                    return null;
-                }
-                
-                const image = response.generatedImages[0];
-                if (!image.image || !image.image.imageBytes) {
-                    console.error('No image bytes in response');
-                    return null;
-                }
-                
-                return `data:image/png;base64,${image.image.imageBytes}`;
-            } catch (e: any) {
-                console.error('Error generating logo variation:', e);
-                return null;
-            }
-        }));
-        const filtered = results.filter((r): r is string => r !== null);
-        if (filtered.length === 0) {
-            throw new Error('No logos were generated. Please try again with a different name or style.');
+        const model = "gemini-2.5-flash";
+        const prompt = `Generate 4 professional business logo design concepts for "${name}" company in the ${industry} industry. Style: ${style}. 
+
+For each logo concept, provide:
+1. A detailed text description of the logo design
+2. Color scheme recommendations (provide hex codes)
+3. Typography suggestions
+4. Visual elements and symbols
+
+The logos should be:
+- Clean and simple
+- Suitable for business cards and websites
+- Professional and modern
+- Reflecting the ${style} style
+- Appropriate for the ${industry} industry
+
+Output as a JSON array with exactly 4 logo concepts, each with:
+{
+  "description": "Detailed description of the logo design",
+  "colors": ["#hexcode1", "#hexcode2", "#hexcode3"],
+  "typography": "Font style recommendation",
+  "elements": ["element1", "element2"],
+  "style": "${style}"
+}`;
+
+        const response = await getAI().models.generateContent({
+            model,
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+        
+        const cleanJson = response.text.replace(/```json\n?|\n?```/g, "").trim();
+        let logoConcepts: any[] = [];
+        try {
+            const parsed = JSON.parse(cleanJson);
+            logoConcepts = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            console.error('Failed to parse logo concepts, using defaults:', e);
+            // If parsing fails, create default concepts
+            logoConcepts = [
+                { description: `${style} logo for ${name}`, colors: ['#4F46E5', '#7C3AED'], typography: 'Modern sans-serif', elements: ['geometric shape'], style },
+                { description: `${style} logo for ${name}`, colors: ['#EC4899', '#F59E0B'], typography: 'Bold serif', elements: ['icon'], style },
+                { description: `${style} logo for ${name}`, colors: ['#10B981', '#3B82F6'], typography: 'Clean sans-serif', elements: ['symbol'], style },
+                { description: `${style} logo for ${name}`, colors: ['#8B5CF6', '#EF4444'], typography: 'Minimal', elements: ['abstract'], style }
+            ];
         }
-        return filtered;
+        
+        // Convert logo concepts to visual SVG representations
+        const logoUrls = logoConcepts.slice(0, 4).map((concept: any, index: number) => {
+            const colors = concept?.colors || ['#4F46E5', '#7C3AED', '#EC4899'];
+            const primaryColor = (colors[0]?.replace('#', '') || '4F46E5').substring(0, 6);
+            const secondaryColor = (colors[1]?.replace('#', '') || '7C3AED').substring(0, 6);
+            const displayName = name.length > 12 ? name.substring(0, 10) + '...' : name;
+            
+            // Create an SVG logo placeholder based on the concept
+            const svg = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad${index}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#${primaryColor};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#${secondaryColor};stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="#ffffff"/>
+  <circle cx="200" cy="150" r="60" fill="url(#grad${index})" opacity="0.8"/>
+  <text x="200" y="250" font-family="Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="#1a1a1a">${displayName}</text>
+  <text x="200" y="280" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#666666">${style}</text>
+  <text x="200" y="320" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#999999">Concept ${index + 1}</text>
+</svg>`.trim();
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
+        });
+        
+        if (logoUrls.length === 0) {
+            throw new Error('No logo concepts were generated. Please try again.');
+        }
+        
+        return logoUrls;
     } catch (error) { 
         console.error('Logo generation error:', error);
         throw handleError(error, "generate logo options"); 

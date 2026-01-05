@@ -20,6 +20,8 @@ export enum AppView {
   SETTINGS = 'SETTINGS',
   FINANCIAL_ASSESSMENT = 'FINANCIAL_ASSESSMENT',
   DREAMSHIFT_ASSESSMENT = 'DREAMSHIFT_ASSESSMENT',
+  SEVERANCE_HUB = 'SEVERANCE_HUB',
+  SEVERANCE_ARTICLE = 'SEVERANCE_ARTICLE',
 }
 
 export interface UserProfile {
@@ -201,7 +203,8 @@ export interface FounderProfile {
 
 export interface BusinessNameIdea {
   name: string;
-  domain: string;
+  domain: string; // Keep for backward compatibility, but prefer domains array
+  domains?: string[]; // Multiple domain options per name
   meaning: string;
   alternatives: string[];
   industryFit: string;
@@ -250,6 +253,48 @@ export interface BusinessProfile {
   pricingModel?: string;
   createdAt: string;
   updatedAt: string;
+  // Saved outputs
+  savedRoadmaps?: Array<{
+    id: string;
+    assessment: RoadmapAssessment;
+    result: any; // RoadmapResult
+    createdAt: string;
+  }>;
+  savedPitches?: Array<{
+    id: string;
+    assessment: any;
+    result: any;
+    createdAt: string;
+  }>;
+  savedRevenueStrategies?: Array<{
+    id: string;
+    assessment: any;
+    result: any;
+    createdAt: string;
+  }>;
+  savedLogos?: Array<{
+    id: string;
+    logoUrl: string;
+    style: string;
+    createdAt: string;
+  }>;
+  notes?: Array<{
+    id: string;
+    title: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  favoriteInvestors?: string[]; // Array of investor IDs
+  investorNotes?: Array<{
+    investorId: string;
+    pros: string[];
+    cons: string[];
+    compatibility: number; // 0-100
+    notes: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
 }
 
 // 7-Day Roadmap

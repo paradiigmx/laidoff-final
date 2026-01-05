@@ -400,14 +400,14 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${hubHeroImage})`, opacity: 0.4 }}
                 ></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-slate-900/70 to-teal-900/80"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-600/90 via-orange-500/85 to-orange-700/90"></div>
                 <div className="relative z-10 p-10 md:p-16">
-                    <div className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6 border border-white/10 text-blue-300">
+                    <div className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6 border border-white/10 text-orange-200">
                         Command Center
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-4 leading-tight tracking-tight">
                         Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}<br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-200 to-teal-300" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Hub.</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-200 via-orange-100 to-white" style={{WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Hub.</span>
                     </h1>
                     <p className="text-lg text-slate-300 leading-relaxed font-medium max-w-xl">
                         Your personalized dashboard for tracking goals, managing finances, and discovering opportunities.
@@ -428,7 +428,7 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                         onClick={() => setActiveTab(tab as any)}
                         className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
                             activeTab === tab 
-                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' 
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg' 
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                         }`}
                     >
@@ -1203,7 +1203,7 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                                         <div className="text-center py-8 border-b border-slate-700">
                                             <div className="text-sm text-slate-400 uppercase tracking-wider mb-2">Estimated Net Pay</div>
                                             <div className="text-5xl font-black text-green-400">
-                                                ${calculatedNet.toFixed(2)}
+                                                ${calculatedNet.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </div>
                                             <div className="text-sm text-slate-400 mt-2">
                                                 {PAY_FREQUENCIES.find(f => f.value === payFrequency)?.label || 'per period'}
@@ -1213,45 +1213,45 @@ export const Hub: React.FC<HubProps> = ({ onNavigate }) => {
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center py-2">
                                                 <span className="text-slate-400">Gross Pay</span>
-                                                <span className="font-bold">${taxBreakdown.gross.toFixed(2)}</span>
+                                                <span className="font-bold">${taxBreakdown.gross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             {taxBreakdown.payType === 'hourly' && taxBreakdown.regularPay > 0 && (
                                                 <div className="flex justify-between items-center py-1 text-sm text-slate-500 pl-4">
                                                     <span>Regular ({regularHours}h x ${hourlyRate})</span>
-                                                    <span>${taxBreakdown.regularPay.toFixed(2)}</span>
+                                                    <span>${taxBreakdown.regularPay.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                 </div>
                                             )}
                                             {taxBreakdown.payType === 'hourly' && taxBreakdown.overtimePay > 0 && (
                                                 <div className="flex justify-between items-center py-1 text-sm text-orange-400 pl-4">
                                                     <span>Overtime ({overtimeHours}h x ${overtimeRate || (parseFloat(hourlyRate) * 1.5).toFixed(2)})</span>
-                                                    <span>${taxBreakdown.overtimePay.toFixed(2)}</span>
+                                                    <span>${taxBreakdown.overtimePay.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                 </div>
                                             )}
                                             {taxBreakdown.totalDeductions > 0 && (
                                                 <div className="flex justify-between items-center py-2 text-blue-400">
                                                     <span>Pre-Tax Deductions</span>
-                                                    <span>-${taxBreakdown.totalDeductions.toFixed(2)}</span>
+                                                    <span>-${taxBreakdown.totalDeductions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                 </div>
                                             )}
                                             <div className="flex justify-between items-center py-2 text-red-400">
                                                 <span>Federal Tax <span className="text-xs text-slate-500">({taxBreakdown.effectiveFederalRate?.toFixed(1)}%)</span></span>
-                                                <span>-${taxBreakdown.federal.toFixed(2)}</span>
+                                                <span>-${taxBreakdown.federal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-2 text-red-400">
                                                 <span>Social Security <span className="text-xs text-slate-500">(6.2%)</span></span>
-                                                <span>-${taxBreakdown.socialSecurity.toFixed(2)}</span>
+                                                <span>-${taxBreakdown.socialSecurity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-2 text-red-400">
                                                 <span>Medicare <span className="text-xs text-slate-500">(1.45%)</span></span>
-                                                <span>-${taxBreakdown.medicare.toFixed(2)}</span>
+                                                <span>-${taxBreakdown.medicare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-2 text-red-400">
                                                 <span>State Tax ({calcState}) <span className="text-xs text-slate-500">({(STATE_TAX_RATES[calcState]?.rate * 100 || 0).toFixed(1)}%)</span>{taxBreakdown.stateInfo?.hasNoIncomeTax && <span className="ml-1 text-xs text-green-400">(No State Tax!)</span>}</span>
-                                                <span>-${taxBreakdown.state.toFixed(2)}</span>
+                                                <span>-${taxBreakdown.state.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-t border-slate-700 mt-4">
                                                 <span className="font-bold text-lg">Net Pay</span>
-                                                <span className="font-black text-xl text-green-400">${taxBreakdown.net.toFixed(2)}</span>
+                                                <span className="font-black text-xl text-green-400">${taxBreakdown.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                         </div>
 
